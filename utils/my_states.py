@@ -8,7 +8,3 @@ class MenuStates(StatesGroup):
 class RegisterStates(StatesGroup):
     input_username = State()
     input_password = State()
-
-
-class ChangeSkinStates(StatesGroup):
-    input_url = State()

@@ -3,7 +3,7 @@ from aiogram.filters import Command, StateFilter
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
-from utils.my_states import MenuStates, RegisterStates, ChangeSkinStates
+from utils.my_states import MenuStates, RegisterStates
 from utils.interface import add_user, user_is_exists
 import logging
 import re
