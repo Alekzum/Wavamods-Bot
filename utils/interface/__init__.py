@@ -34,5 +34,5 @@ def user_is_exists(username: str) -> bool:
 
 
 def get_account_count_by_uid(uid: int) -> int:
-    return _db.getAccountCountByUid(uid)
+    return len(_binds.getBinds(uid))
 
