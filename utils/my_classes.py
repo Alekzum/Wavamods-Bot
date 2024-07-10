@@ -3,8 +3,6 @@ from dataclasses import dataclass
 
 @dataclass
 class Account:
-    uid: int
-    """Account owner's ID"""
-    login: str
+    username: str
     password: str
-    skin: str
+    skinURL: str

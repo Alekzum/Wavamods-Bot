@@ -2,7 +2,7 @@ from aiogram import Router, Bot
 from aiogram.filters import Command, StateFilter, CommandStart
 from aiogram.types import Message, BotCommand
 from aiogram.fsm.context import FSMContext
-from utils.my_database import get_accounts_by_uid, change_skin, get_account_count_by_uid
+from utils.interface import get_accounts_by_uid, change_skin, get_account_count_by_uid
 from utils.my_states import MenuStates, RegisterStates
 from http.client import responses
 import aiohttp
@@ -84,27 +84,28 @@ async def cmd_skin(message: Message):
         )
         return
 
-    _, nickname, url = args
-
-    urlValid, msg = await check_skin(url)
-    if not urlValid:
-        await message.answer(msg)
-        return
+    _, username, url = args
 
     accounts = get_accounts_by_uid(uid)
     if accounts is None:
         await message.answer("У вас нет аккаунтов")
         return
     
-    logins = [a.login for a in accounts]
-    if nickname not in logins:
+    usernames = [a.username for a in accounts]
+
+    if username not in usernames:
         await message.answer("Аккаунта с таким ником нет среди ваших")
         return
 
-    account = accounts[logins.index(nickname)]
+    urlValid, msg = await check_skin(url)
+    if not urlValid:
+        await message.answer(msg)
+        return
+
+    account = accounts[usernames.index(username)]
     password = account.password
 
-    status, msg = change_skin(uid=uid, login=nickname, password=password, skin=url)
+    status, msg = change_skin(uid=uid, username=username, password=password, skinURL=url)
     if not status:
         await message.answer(f"Что-то пошло не так при изменении скина. Подробнее: {msg}")
         return
@@ -122,7 +123,7 @@ async def cmd_profiles(message: Message, state: FSMContext):
         await message.answer(f"У вас нет аккаунтов")
         return
 
-    usernames = [str(acc.login) for acc in accounts]
+    usernames = [str(acc.username) for acc in accounts]
     result = "\n • ".join([""] + usernames)
     await message.answer(f"Все ваши аккаунты: {result}")
 

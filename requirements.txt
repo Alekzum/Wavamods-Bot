@@ -1,3 +1,5 @@
-aiogram==3.10.0
+pymysql==1.1.1
+cryptography==42.0.8
 python-dotenv==1.0.1
 aiogram_sqlite_storage==1.0.0
+aiogram==3.10.0
