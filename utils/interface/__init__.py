@@ -17,12 +17,12 @@ def get_logins_by_uid(uid: int) -> list[str] | None:
     return user_usernames
 
 
-def change_skin(uid: int, username: str, password: str, skinURL: str) -> tuple[bool, str]:
-    return _db.changeSkin(uid, username, password, skinURL)
+def change_skin(username: str, password: str, skinURL: str) -> tuple[bool, str]:
+    return _db.changeSkin(username, password, skinURL)
 
 
 def add_user(uid: int, username: str, password: str, skinURL: Optional[str] = None)  -> tuple[bool, str]:
-    temp_result = _db.addUser(uid, username, password, skinURL)
+    temp_result = _db.addUser(username, password, skinURL)
     if temp_result[0]:
         _binds.addBind(uid, username)
     

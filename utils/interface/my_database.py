@@ -70,7 +70,7 @@ def getUserByUsername(username: str) -> Account | None:
     return Account(**result) if result else None
 
 
-def addUser(uid: int, username: str, password: str, skinURL: Optional[str] = None) -> tuple[bool, str]:
+def addUser(username: str, password: str, skinURL: Optional[str] = None) -> tuple[bool, str]:
     """return tuple like (status, message)"""
     already_exists = userIsExists(username)
     if already_exists:
@@ -87,7 +87,7 @@ def addUser(uid: int, username: str, password: str, skinURL: Optional[str] = Non
     return (True, "Пользователь добавлен в базу данных")
 
 
-def changeSkin(uid: int, username: str, password: str, skinURL: str) -> tuple[bool, str]:
+def changeSkin(username: str, password: str, skinURL: str) -> tuple[bool, str]:
     """return tuple like (status, message)"""
     user = getUserByUsername(username)
     if user is None:

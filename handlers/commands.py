@@ -99,13 +99,13 @@ async def cmd_skin(message: Message):
 
     urlValid, msg = await check_skin(url)
     if not urlValid:
-        await message.answer(msg)
+        await message.answer(f"Что-то пошло не так при проверке скина. Подробнее: {msg}")
         return
 
     account = accounts[usernames.index(username)]
     password = account.password
 
-    status, msg = change_skin(uid=uid, username=username, password=password, skinURL=url)
+    status, msg = change_skin(username=username, password=password, skinURL=url)
     if not status:
         await message.answer(f"Что-то пошло не так при изменении скина. Подробнее: {msg}")
         return
