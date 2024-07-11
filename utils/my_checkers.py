@@ -1,0 +1,61 @@
+from .config import ADMIN_IDS
+from typing import Union
+from aiogram.filters import BaseFilter
+from aiogram.types import Message
+from http.client import responses
+import aiohttp
+import re
+
+
+url_validator = re.compile(r"https?:\/\/(www\.)?([-a-zA-Z0-9@:%._\+~#=]{1,256})\.([a-zA-Z0-9()]{1,6})\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)\.(png|jpg|jpeg)")
+username_checker = re.compile(r"[a-zA-Z0-9]+")
+
+
+class AdminFilter(BaseFilter):
+    async def __call__(self, message: Message) -> bool:
+        return bool(message.from_user and isAdmin(message.from_user.id))
+
+
+def isAdmin(uid: int) -> bool:
+    return uid in ADMIN_IDS
+
+
+async def check_skin(skin_url) -> tuple[bool, str]:
+    matched_url = url_validator.match(skin_url)
+    if matched_url is None:
+        return (False, "Ссылка неправильная. Попробуйте нормальную ссылку")
+    
+    try:
+        async with aiohttp.ClientSession() as session: 
+            async with session.get(skin_url) as response:
+                status = response.status
+    except Exception:
+        return (False, "Ссылка неправильная. Попробуйте нормальную ссылку")
+
+    if status == 429:
+        return (False, f"Не могу загрузить скин. Попробуйте другую ссылку")
+    
+    elif status != 200:
+        return (False, f"Не могу загрузить скин. Код ошибки: {responses[status]}. Попробуйте другую ссылку")
+
+    return (True, "Ссылка правильная")
+
+
+async def check_username(username: str) -> tuple[bool, str]:    
+    if len(username) < 3:
+        return (False, "Ник должен быть по-длиннее. Попробуйте другой ник")
+        
+    elif len(username) > 12:
+        return (False, "Ник должен быть по-короче. Попробуйте другой ник")
+    
+    elif username_checker.fullmatch(username) is None:
+        return (False, "Ваш ник состоит не только из английских букв и цифр. Попробуйте другой ник")
+    
+    return (True, "Ник правильный")
+
+
+async def check_password(password: str) -> tuple[bool, str]:
+    if len(password) < 6:
+        return (False, "Пароль должен быть длиннее")
+    
+    return (True, "Пароль правильный")

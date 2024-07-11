@@ -3,16 +3,15 @@ from aiogram.filters import Command, StateFilter
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
+from utils.my_checkers import check_username, check_password
 from utils.my_states import MenuStates, RegisterStates
-from utils.interface import add_user, user_is_exists
+from utils.interface import add_account, account_is_exists
 import logging
 import re
 
 
 logger = logging.getLogger(__name__)
 rt = Router()
-
-login_checker = re.compile(r"[a-zA-Z0-9]+")
 
 
 @rt.message(RegisterStates.input_username)
@@ -22,20 +21,13 @@ async def fsm_register_username(message: Message, state: FSMContext):
     if username is None:
         await message.answer("Текст в вашем сообщении не найден. Введите ваш ник")
         return
-    
-    elif len(username) < 3:
-        await message.answer("Ник должен быть по-длиннее. Попробуйте другой ник")
-        return
-        
-    elif len(username) > 12:
-        await message.answer("Ник должен быть по-короче. Попробуйте другой ник")
-        return
-    
-    elif login_checker.fullmatch(username) is None:
-        await message.answer("Ваш ник состоит не только из английских букв и цифр. Попробуйте другой ник")
+
+    success, msg = await check_username(username)
+    if not success:
+        await message.answer(msg)
         return
 
-    alredy_exists = user_is_exists(username)
+    alredy_exists = account_is_exists(username)
     if alredy_exists:
         await message.answer("Данный ник уже занят. Попробуйте другой ник")
         return
@@ -56,21 +48,22 @@ async def fsm_register_password(message: Message, state: FSMContext):
         await message.answer("А где пароль?")
         return
     
-    elif len(password) < 6:
-        await message.answer("Пароль должен быть длиннее")
+    success, msg = await check_password(password)
+    if not success:
+        await message.answer(msg)
         return
-    
+
     data = await state.get_data()
     username = data.get('username')
     if username is None:
         await message.answer("Что-то не так с логином. Пройдите регистрацию ещё раз с помощью команды /register.")
-        await state.set_state()
+        await state.set_state(MenuStates.need_register)
         return
 
-    status, msg = add_user(uid=message.from_user.id, username=username, password=password)
+    status, msg = add_account(uid=message.from_user.id, username=username, password=password)
     if not status:
         await message.answer(f"Что-то пошло не так. Пройдите регистрацию ещё раз с помощью команды /register. Подробнее: {msg}")
-        await state.clear()
+        await state.set_state(MenuStates.need_register)
         return
     
     await state.clear()

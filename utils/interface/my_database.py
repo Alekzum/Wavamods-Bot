@@ -1,7 +1,7 @@
 # from html.parser import escape, unescape
 from ..config import DB_IP, DB_NAME, DB_LOGIN, DB_PASSWORD
 from ..my_classes import Account
-from typing import Optional, TypedDict
+from typing import Optional, TypedDict, Literal, Any
 import pymysql.cursors  # type: ignore
 import pymysql  # type: ignore
 import logging
@@ -10,23 +10,28 @@ import logging
 TABLE_NAME = "users"
 logger = logging.getLogger(__name__)
 
+
+ErrorUsernameNotFound = (False, "Данного логина нет в базе данных")
+ErrorPasswordIsWrong = (False, "Пароль неправильный")
+
+
 class ACCOUNT_TUPLE(TypedDict):
     username: str
     password: str
     skinURL: str
+    skinBanned: bool
+    skinBannedReason: Optional[str]
 
-# with connect_to_database() as con:
-#     cur = con.cursor()
-#     cur.execute("""
-# CREATE TABLE IF NOT EXISTS `{TABLE_NAME}`(
-#     uid INTEGER,
-#     username STRING,
-#     password STRING,
-#     skinURL STRING,
-#     active INTEGER
-# )
-# """)
-#     con.commit()
+
+def handle_pymysql_errors(return_default=None, return_none=False):
+    def handler(func):
+        def inner(*args, **kwargs) -> Any | tuple[Literal[False], str]:
+            try:
+                return func(*args, **kwargs)
+            except pymysql.err.Error as ex:
+                return None if (return_none and not return_default) else (False, f"Произошла ошибка: {ex!r}") if return_default is None else return_default
+        return inner
+    return handler
 
 
 def connect_to_remote_database():
@@ -36,7 +41,7 @@ def connect_to_remote_database():
     return connection
 
 
-def userIsExists(username: str) -> bool:
+def accountIsExists(username: str) -> bool:
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
             cur.execute(f"SELECT `skinURL` FROM `{TABLE_NAME}` WHERE `username`=%s", (username, ))
@@ -44,35 +49,45 @@ def userIsExists(username: str) -> bool:
     return result is not None
 
 
-def getAccountCountByUid(uid: int) -> int:
+def getAccountCountByUid(telegramID: int) -> int:
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
-            cur.execute(f"SELECT * FROM `{TABLE_NAME}` WHERE `uid`=%s", (uid, ))
+            cur.execute(f"SELECT * FROM `{TABLE_NAME}` WHERE `telegramID`=%s", (telegramID, ))
             result: list[ACCOUNT_TUPLE] | None = cur.fetchall()
     return len(result) if result else 0
 
 
-def getAccountsByUid(uid: int) -> list[Account] | None:
+def getAccountsByUid(telegramID: int) -> list[Account] | None:
     """return list like [Account1, Account2, Account3]"""
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
-            cur.execute(f"SELECT `username`, `password`, `skinURL` FROM `{TABLE_NAME}` WHERE `uid`=%s", (uid, ))
+            cur.execute(f"SELECT `username`, `password`, `skinURL`, `skinBanned`, `skinBannedReason` FROM `{TABLE_NAME}` WHERE `telegramID`=%s", (telegramID, ))
             result: list[ACCOUNT_TUPLE] | None = cur.fetchall()
     return [Account(**t) for t in result] if result else None
 
 
-def getUserByUsername(username: str) -> Account | None:
+def getAllAccounts() -> list[Account] | None:
+    """return list like [Account1, Account2, Account3]"""
+    with connect_to_remote_database() as con:
+        with con.cursor() as cur:
+            cur.execute(f"SELECT `username`, `password`, `skinURL`, `skinBanned`, `skinBannedReason` FROM `{TABLE_NAME}`", ())
+            result: list[ACCOUNT_TUPLE] | None = cur.fetchall()
+    return [Account(**t) for t in result] if result else None
+
+
+def getAccountByUsername(username: str) -> Account | None:
     """return tuple like (password, skinURL)"""
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
-            cur.execute(f"SELECT `username`, `password`, `skinURL` FROM `{TABLE_NAME}` WHERE `username`=%s", (username, ))
+            cur.execute(f"SELECT `username`, `password`, `skinURL`, `skinBanned`, `skinBannedReason` FROM `{TABLE_NAME}` WHERE `username`=%s", (username, ))
             result: ACCOUNT_TUPLE | None = cur.fetchone()
     return Account(**result) if result else None
 
 
-def addUser(username: str, password: str, skinURL: Optional[str] = None) -> tuple[bool, str]:
+@handle_pymysql_errors
+def addUser(telegramID: int, username: str, password: str, skinURL: Optional[str] = None) -> tuple[bool, str]:
     """return tuple like (status, message)"""
-    already_exists = userIsExists(username)
+    already_exists = accountIsExists(username)
     if already_exists:
         return (False, "Данный ник занят")
 
@@ -81,21 +96,24 @@ def addUser(username: str, password: str, skinURL: Optional[str] = None) -> tupl
         
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
-            cur.execute(f"INSERT INTO `{TABLE_NAME}` (`username`, `password`, `skinURL`) VALUES (%s, %s, %s)", (username, password, skinURL, ))
+            cur.execute(f"INSERT INTO `{TABLE_NAME}` (`username`, `password`, `skinURL`, `telegramID`) VALUES (%s, %s, %s, %s)", (username, password, skinURL, telegramID, ))
             con.commit()
     
     return (True, "Пользователь добавлен в базу данных")
 
 
+@handle_pymysql_errors
 def changeSkin(username: str, password: str, skinURL: str) -> tuple[bool, str]:
     """return tuple like (status, message)"""
-    user = getUserByUsername(username)
+    user = getAccountByUsername(username)
     if user is None:
-        return (False, "Данного логина нет в базе данных")
+        return ErrorUsernameNotFound
     
     elif user.password != password:
-        logger.info(f"Except {user.password!r}, get {password!r}")
-        return (False, "Пароль неправильный")
+        return ErrorPasswordIsWrong
+
+    elif user.skinBanned:
+        return (False, "Аккаунту запрещено менять скин. Причина: " + (user.skinBannedReason or "*Не указано*"))
 
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
@@ -105,15 +123,33 @@ def changeSkin(username: str, password: str, skinURL: str) -> tuple[bool, str]:
     return (True, "Скин пользователя обновлён")
 
 
+@handle_pymysql_errors
+def changePassword(username: str, old_password: str, new_password: str) -> tuple[bool, str]:
+    """return tuple like (status, message)"""
+    user = getAccountByUsername(username)
+    if user is None:
+        return ErrorUsernameNotFound
+    
+    elif user.password != old_password:
+        return ErrorPasswordIsWrong
+
+    with connect_to_remote_database() as con:
+        with con.cursor() as cur:
+            cur.execute(f"UPDATE `{TABLE_NAME}` SET password=%s WHERE `username`=%s", (new_password, username, ))
+            con.commit()
+    
+    return (True, "Пароль пользователя обновлён")
+
+
+@handle_pymysql_errors
 def deleteUser(username: str, password: str) -> tuple[bool, str]:
     """return tuple like (status, message)"""
-    user = getUserByUsername(username)
+    user = getAccountByUsername(username)
     if user is None:
-        return (False, "Данного логина нет в базе данных")
+        return ErrorUsernameNotFound
     
     elif user.password != password:
-        logger.info(f"Except {user.password!r}, get {password!r}")
-        return (False, "Пароль неправильный")
+        return ErrorPasswordIsWrong
 
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
@@ -121,3 +157,46 @@ def deleteUser(username: str, password: str) -> tuple[bool, str]:
             con.commit()
 
     return True, "Пользователь удалён из базы данных"
+
+
+@handle_pymysql_errors
+def banSkinByUsername(username: str, reason: Optional[str] = None) -> tuple[bool, str]:
+    account = getAccountByUsername(username)
+    if account is None:
+        return ErrorUsernameNotFound
+
+    elif account.skinBanned:
+        return (False, "Аккаунту уже запрещено менять скин")
+
+    with connect_to_remote_database() as con:
+        with con.cursor() as cur:
+            cur.execute(f"UPDATE `{TABLE_NAME}` SET `skinBanned`=1, `skinBannedReason`=%s WHERE `username`=%s", (username, reason or ""))
+            con.commit()
+    
+    return (True, "Возможность аккаунта менять скин теперь заблокирована")
+
+
+@handle_pymysql_errors
+def unbanSkinByUsername(username: str) -> tuple[bool, str]:
+    account = getAccountByUsername(username)
+    if account is None:
+        return ErrorUsernameNotFound
+
+    elif not account.skinBanned:
+        return (False, "Аккаунту уже можно менять скин")
+
+    with connect_to_remote_database() as con:
+        with con.cursor() as cur:
+            cur.execute(f"UPDATE `{TABLE_NAME}` SET `skinBanned`=0, `skinBannedReason`='' WHERE `username`=%s", (username, ))
+            con.commit()
+    
+    return (True, "Возможность аккаунта менять скин теперь разблокирована")
+
+
+@handle_pymysql_errors
+def getBanStateByUsername(username: str) -> tuple[bool, bool|str]:
+    account = getAccountByUsername(username)
+    if account is None:
+        return ErrorUsernameNotFound
+    
+    return (True, bool(account.skinBanned))

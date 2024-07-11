@@ -2,24 +2,26 @@ from aiogram import Router, Bot
 from aiogram.filters import Command, StateFilter, CommandStart
 from aiogram.types import Message, BotCommand
 from aiogram.fsm.context import FSMContext
-from utils.interface import get_accounts_by_uid, change_skin, get_account_count_by_uid
+
+from utils.interface import (
+    get_accounts_by_uid, change_skin, get_account_count_by_uid, get_all_accounts, 
+    get_account_by_username, get_usernames_by_uid, change_password, ban_skin_by_username, unban_skin_by_username
+)
 from utils.my_states import MenuStates, RegisterStates
-from http.client import responses
-import aiohttp
+from utils.my_checkers import AdminFilter, isAdmin, check_skin
 import logging
 import pathlib
-import re
 
 
+splitter = "\n\n • "
 logger = logging.getLogger(__name__)
 rt = Router()
 commands_are_changed = False
-url_validator = re.compile(r"https?:\/\/(www\.)?([-a-zA-Z0-9@:%._\+~#=]{1,256})\.([a-zA-Z0-9()]{1,6})\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)\.(png|jpg|jpeg)")
 
 
 @rt.message(StateFilter(None), CommandStart())
 async def cmd_start(message: Message, bot: Bot, state: FSMContext):
-    await state.set_state(MenuStates.menu)
+    await state.set_state(MenuStates.need_register)
     await message.answer("Здравствуйте! Для регистрации аккаунта, необходимо написать /register")
 
     global commands_are_changed
@@ -38,13 +40,14 @@ async def update_commands(message: Message, bot: Bot):
                 BotCommand(command="cancel", description="Отменить текущее действие"),
                 BotCommand(command="changepass", description="Изменить пароль от аккаунта"),
                 BotCommand(command="profiles", description="Перечислить все ваши аккаунты"),
+                BotCommand(command="profile", description="Получить информацию об вашем аккаунте"),
                 BotCommand(command="privacy", description="Наша политика приватности")
             ]
         )
         commands_are_changed = True
 
 
-@rt.message(MenuStates.menu, Command("register"))
+@rt.message(StateFilter(MenuStates.need_register, MenuStates.menu), Command("register"))
 async def cmd_register(message: Message, state: FSMContext):
     if message.from_user is None:
         return
@@ -123,9 +126,73 @@ async def cmd_profiles(message: Message, state: FSMContext):
         await message.answer(f"У вас нет аккаунтов")
         return
 
-    usernames = [str(acc.username) for acc in accounts]
-    result = "\n • ".join([""] + usernames)
+    accounts_string = [str(acc) for acc in accounts]
+    result = splitter.join([""] + accounts_string)
     await message.answer(f"Все ваши аккаунты: {result}")
+
+
+@rt.message(MenuStates.menu, Command("profile"))
+async def cmd_profile(message: Message, state: FSMContext):
+    if message.from_user is None:
+        return
+    if message.text is None:
+        return
+
+    uid = message.from_user.id
+    args = message.text.split(" ")
+
+    if len(args) == 1 or len(args) > 2:
+        await message.answer("Надо указать ник вашего аккаунта")
+        return
+    
+    _, username = args
+    
+    usernames = get_usernames_by_uid(uid) or []
+    if username not in usernames:
+        await message.answer("У вас нет такого аккаунта")
+        return
+    
+    account = get_account_by_username(username)
+    if account is None:
+        await message.answer(f"Аккаунта с таким ником нет")
+        return
+    
+    text = str(account)
+    await message.answer(text)
+
+
+@rt.message(MenuStates.menu, Command("changepass"))
+async def cmd_changepass(message: Message, state: FSMContext):
+    if message.from_user is None:
+        return
+    if message.text is None:
+        return
+
+    uid = message.from_user.id
+    args = message.text.split(" ")
+
+    if len(args) != 3:
+        await message.answer("Надо указать ник вашего аккаунта и новый пароль для него")
+        return
+    
+    _, username, password = args
+    
+    usernames = get_usernames_by_uid(uid) or []
+    if username not in usernames:
+        await message.answer("У вас нет такого аккаунта")
+        return
+    
+    account = get_account_by_username(username)
+    if account is None:
+        await message.answer(f"Аккаунта с таким ником нет")
+        return
+    
+    success, msg = change_password(username, account.password, password)
+    if not success:
+        await message.answer(f"Что-то не так при смене пароля: {msg}")
+        return
+    
+    await message.answer("Пароль успешно изменён!")
 
 
 @rt.message(Command("privacy"))
@@ -155,22 +222,66 @@ async def cmd_cancel(message: Message, state: FSMContext):
     await message.answer("Хорошо. Вы теперь в меню. ")
 
 
-async def check_skin(skin_url) -> tuple[bool, str]:
-    matched_url = url_validator.match(skin_url)
-    if matched_url is None:
-        return (False, "Ссылка неправильная. Попробуйте нормальную ссылку")
-    
-    try:
-        async with aiohttp.ClientSession() as session: 
-            async with session.get(skin_url) as response:
-                status = response.status
-    except Exception:
-        return (False, "Ссылка неправильная. Попробуйте нормальную ссылку")
+# Admin's things
 
-    if status == 429:
-        return (False, f"Не могу загрузить скин. Попробуйте другую ссылку")
-    
-    elif status != 200:
-        return (False, f"Не могу загрузить скин. Код ошибки: {responses[status]}. Попробуйте другую ссылку")
 
-    return (True, "Ссылка правильная")
+@rt.message(MenuStates.menu, AdminFilter(), Command("admin"))
+async def cmd_admin(message: Message, state: FSMContext):
+    accounts = get_all_accounts() or []
+    ban_hint = "Можно убрать возможность менять скин у человека при помощи `/ban_skin ник [причина]`, или снять с помощью `/unban_skin ник`" \
+        "\nАккаунты в базе данных:"
+
+    results = [str(account) for account in accounts]
+    text = ban_hint + (splitter.join([""] + results) if results else "  Никого нет в базе данных...")
+    await message.answer(text)
+
+
+@rt.message(MenuStates.menu, AdminFilter(), Command("ban_skin"))
+async def cmd_ban_skin(message: Message, state: FSMContext):
+    if message.from_user is None:
+        return
+    if message.text is None:
+        return
+
+    args = message.text.split(" ")
+
+    if len(args) < 2:
+        await message.answer("Надо указать ник аккаунта и причину")
+        return
+    
+    _, username, *reason_list = args
+
+    if reason_list:
+        reason = " ".join(reason_list)
+    else:
+        reason = None
+    
+    success, msg = ban_skin_by_username(username, reason)
+    if not success:
+        await message.answer(f"Что-то не так при выдаче бана: {msg}")
+        return
+    
+    await message.answer(f"Бан выдан")
+
+
+@rt.message(MenuStates.menu, AdminFilter(), Command("unban_skin"))
+async def cmd_unban_skin(message: Message, state: FSMContext):
+    if message.from_user is None:
+        return
+    if message.text is None:
+        return
+
+    args = message.text.split(" ")
+
+    if len(args) != 2:
+        await message.answer("Надо указать ник аккаунта")
+        return
+    
+    _, username = args
+    
+    success, msg = unban_skin_by_username(username)
+    if not success:
+        await message.answer(f"Что-то не так при снятии бана: {msg}")
+        return
+
+    await message.answer(f"Бан снят")
