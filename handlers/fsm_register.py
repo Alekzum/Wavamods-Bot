@@ -1,13 +1,11 @@
 from aiogram import Router
-from aiogram.filters import Command, StateFilter
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
 from utils.my_checkers import check_username, check_password
-from utils.my_states import MenuStates, RegisterStates
+from utils.fsm.my_states import MenuStates, RegisterStates
 from utils.interface import add_account, account_is_exists
 import logging
-import re
 
 
 cancel_hint = "\nЕсли хотите отменить текущее действие, используйте команду /cancel"

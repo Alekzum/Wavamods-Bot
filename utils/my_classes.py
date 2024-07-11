@@ -8,6 +8,7 @@ class Account:
     password: str
     skinURL: str
     skinBanned: bool
+    telegramID: int
     skinBannedReason: Optional[str] = None
 
     def __str__(self) -> str:

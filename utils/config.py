@@ -17,7 +17,6 @@ def get_field(fieldName: str) -> str:
     return maybeThing or get_field(fieldName)
 
 
-
 def get_token() -> str:
     maybe_token: str | None = dotenv.get_key(".env", "BOT_TOKEN")
     if maybe_token is not None and maybe_token:
@@ -32,6 +31,7 @@ path = dotenv.find_dotenv()
 if path == "":
     with open(".env", "w") as f:
         pass
+
 
 BOT_TOKEN: str = get_token()
 DB_IP = get_field("DB_IP")
