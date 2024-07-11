@@ -10,6 +10,7 @@ import logging
 import re
 
 
+cancel_hint = "\nЕсли хотите отменить текущее действие, используйте команду /cancel"
 logger = logging.getLogger(__name__)
 rt = Router()
 
@@ -34,7 +35,7 @@ async def fsm_register_username(message: Message, state: FSMContext):
     
     await state.update_data(dict(username=username))
     await state.set_state(RegisterStates.input_password)
-    await message.answer(f"Хорошо, ваш ник {username}. Теперь нужно ввести пароль (от 6 символов).")
+    await message.answer(f"Хорошо, ваш ник {username}. Теперь нужно ввести пароль (от 6 символов)." + cancel_hint)
 
 
 @rt.message(RegisterStates.input_password)

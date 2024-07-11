@@ -13,6 +13,7 @@ import logging
 import pathlib
 
 
+cancel_hint = "\nЕсли хотите отменить текущее действие, используйте команду /cancel"
 splitter = "\n\n • "
 logger = logging.getLogger(__name__)
 rt = Router()
@@ -35,9 +36,9 @@ async def update_commands(message: Message, bot: Bot):
     if not commands_are_changed:
         await bot.set_my_commands(
             [
+                BotCommand(command="cancel", description="Отменить текущее действие"),
                 BotCommand(command="register", description="Привязать ваш аккаунт телеграм к аккаунту майнкрафт"),
                 BotCommand(command="skin", description="Установить скин"),
-                BotCommand(command="cancel", description="Отменить текущее действие"),
                 BotCommand(command="changepass", description="Изменить пароль от аккаунта"),
                 BotCommand(command="profiles", description="Перечислить все ваши аккаунты"),
                 # BotCommand(command="profile", description="Получить информацию об вашем аккаунте"),
@@ -57,7 +58,7 @@ async def cmd_register(message: Message, state: FSMContext):
         await message.answer("Вы достигли лимита по количеству аккаунтов на одного человека. Максимум вы можете иметь 3 аккаунта.")
         return
 
-    await message.answer("Напишите ник для вашего аккаунта (от 3 до 12 символов, только английские буквы и цифры)")
+    await message.answer("Напишите ник для вашего аккаунта (от 3 до 12 символов, только английские буквы и цифры)" + cancel_hint)
     await state.set_state(RegisterStates.input_username)
 
 
