@@ -23,15 +23,14 @@ class ACCOUNT_TUPLE(TypedDict):
     skinBannedReason: Optional[str]
 
 
-def handle_pymysql_errors(return_default=None, return_none=False):
-    def handler(func):
-        def inner(*args, **kwargs) -> Any | tuple[Literal[False], str]:
-            try:
-                return func(*args, **kwargs)
-            except pymysql.err.Error as ex:
-                return None if (return_none and not return_default) else (False, f"Произошла ошибка: {ex!r}") if return_default is None else return_default
-        return inner
-    return handler
+def handle_pymysql_errors(func):
+    def inner(*args, **kwargs) -> Any | tuple[Literal[False], str]:
+        try:
+            return func(*args, **kwargs)
+        except pymysql.err.Error as ex:
+            logger.error(repr(ex))
+            return (False, "Произошла ошибка.")
+    return inner
 
 
 def connect_to_remote_database():

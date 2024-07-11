@@ -8,7 +8,7 @@ from utils.interface import (
     get_account_by_username, get_usernames_by_uid, change_password, ban_skin_by_username, unban_skin_by_username
 )
 from utils.my_states import MenuStates, RegisterStates
-from utils.my_checkers import AdminFilter, isAdmin, check_skin
+from utils.my_checkers import AdminFilter, isAdmin, check_skin, check_password
 import logging
 import pathlib
 
@@ -40,7 +40,7 @@ async def update_commands(message: Message, bot: Bot):
                 BotCommand(command="cancel", description="Отменить текущее действие"),
                 BotCommand(command="changepass", description="Изменить пароль от аккаунта"),
                 BotCommand(command="profiles", description="Перечислить все ваши аккаунты"),
-                BotCommand(command="profile", description="Получить информацию об вашем аккаунте"),
+                # BotCommand(command="profile", description="Получить информацию об вашем аккаунте"),
                 BotCommand(command="privacy", description="Наша политика приватности")
             ]
         )
@@ -131,36 +131,6 @@ async def cmd_profiles(message: Message, state: FSMContext):
     await message.answer(f"Все ваши аккаунты: {result}")
 
 
-@rt.message(MenuStates.menu, Command("profile"))
-async def cmd_profile(message: Message, state: FSMContext):
-    if message.from_user is None:
-        return
-    if message.text is None:
-        return
-
-    uid = message.from_user.id
-    args = message.text.split(" ")
-
-    if len(args) == 1 or len(args) > 2:
-        await message.answer("Надо указать ник вашего аккаунта")
-        return
-    
-    _, username = args
-    
-    usernames = get_usernames_by_uid(uid) or []
-    if username not in usernames:
-        await message.answer("У вас нет такого аккаунта")
-        return
-    
-    account = get_account_by_username(username)
-    if account is None:
-        await message.answer(f"Аккаунта с таким ником нет")
-        return
-    
-    text = str(account)
-    await message.answer(text)
-
-
 @rt.message(MenuStates.menu, Command("changepass"))
 async def cmd_changepass(message: Message, state: FSMContext):
     if message.from_user is None:
@@ -185,6 +155,11 @@ async def cmd_changepass(message: Message, state: FSMContext):
     account = get_account_by_username(username)
     if account is None:
         await message.answer(f"Аккаунта с таким ником нет")
+        return
+
+    success, msg = await check_password(password)
+    if not success:
+        await message.answer(msg)
         return
     
     success, msg = change_password(username, account.password, password)
