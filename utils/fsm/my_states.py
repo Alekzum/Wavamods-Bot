@@ -9,3 +9,7 @@ class MenuStates(StatesGroup):
 class RegisterStates(StatesGroup):
     input_username = State()
     input_password = State()
+
+
+class DeleteAccountStates(StatesGroup):
+    confirm_delete = State()

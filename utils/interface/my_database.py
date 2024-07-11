@@ -21,6 +21,7 @@ class ACCOUNT_TUPLE(TypedDict):
     skinURL: str
     skinBanned: bool
     skinBannedReason: Optional[str]
+    telegramID: int
 
 
 def handle_pymysql_errors(func):
@@ -60,7 +61,7 @@ def getAccountsByUid(telegramID: int) -> list[Account] | None:
     """return list like [Account1, Account2, Account3]"""
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
-            cur.execute(f"SELECT `username`, `password`, `skinURL`, `skinBanned`, `skinBannedReason` FROM `{TABLE_NAME}` WHERE `telegramID`=%s", (telegramID, ))
+            cur.execute(f"SELECT `username`, `password`, `skinURL`, `skinBanned`, `skinBannedReason`, `telegramID` FROM `{TABLE_NAME}` WHERE `telegramID`=%s", (telegramID, ))
             result: list[ACCOUNT_TUPLE] | None = cur.fetchall()
     return [Account(**t) for t in result] if result else None
 
@@ -69,7 +70,7 @@ def getAllAccounts() -> list[Account] | None:
     """return list like [Account1, Account2, Account3]"""
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
-            cur.execute(f"SELECT `username`, `password`, `skinURL`, `skinBanned`, `skinBannedReason` FROM `{TABLE_NAME}`", ())
+            cur.execute(f"SELECT `username`, `password`, `skinURL`, `skinBanned`, `skinBannedReason`, `telegramID` FROM `{TABLE_NAME}`", ())
             result: list[ACCOUNT_TUPLE] | None = cur.fetchall()
     return [Account(**t) for t in result] if result else None
 
@@ -78,7 +79,7 @@ def getAccountByUsername(username: str) -> Account | None:
     """return tuple like (password, skinURL)"""
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
-            cur.execute(f"SELECT `username`, `password`, `skinURL`, `skinBanned`, `skinBannedReason` FROM `{TABLE_NAME}` WHERE `username`=%s", (username, ))
+            cur.execute(f"SELECT `username`, `password`, `skinURL`, `skinBanned`, `skinBannedReason`, `telegramID` FROM `{TABLE_NAME}` WHERE `username`=%s", (username, ))
             result: ACCOUNT_TUPLE | None = cur.fetchone()
     return Account(**result) if result else None
 
@@ -138,24 +139,6 @@ def changePassword(username: str, old_password: str, new_password: str) -> tuple
             con.commit()
     
     return (True, "Пароль пользователя обновлён")
-
-
-@handle_pymysql_errors
-def deleteUser(username: str, password: str) -> tuple[bool, str]:
-    """return tuple like (status, message)"""
-    user = getAccountByUsername(username)
-    if user is None:
-        return ErrorUsernameNotFound
-    
-    elif user.password != password:
-        return ErrorPasswordIsWrong
-
-    with connect_to_remote_database() as con:
-        with con.cursor() as cur:
-            cur.execute(f"DELETE FROM `{TABLE_NAME}` WHERE `username`=%s", (username, ))
-            con.commit()
-
-    return True, "Пользователь удалён из базы данных"
 
 
 @handle_pymysql_errors

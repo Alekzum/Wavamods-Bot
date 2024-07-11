@@ -1,10 +1,12 @@
 from typing import Optional
 
-from ..my_checkers import check_skin, check_password
 from ..my_classes import Account as _Account
 
-from . import my_binds as _binds  # type: ignore
-from . import my_database as _db  # type: ignore
+from . import my_banlist as _block
+from . import my_database as _db
+
+
+ErrorUsernameNotFound = _db.ErrorUsernameNotFound
 
 
 def get_accounts_by_uid(uid: int) -> list[_Account] | None:
@@ -24,7 +26,7 @@ def change_skin(username: str, password: str, skinURL: str) -> tuple[bool, str]:
     
     account = _db.getAccountByUsername(username)
     if account is None:
-        return _db.ErrorUsernameNotFound
+        return ErrorUsernameNotFound
     
     reason = "Заблокированная возможность менять скины. Причина: " + (account.skinBannedReason or "*не указанно*")
     return (False, reason)
@@ -54,6 +56,9 @@ def get_account_by_username(username: str) -> _Account | None:
     return _db.getAccountByUsername(username)
 
 
+# Admin things
+
+
 def ban_skin_by_username(username: str, reason: Optional[str] = None) -> tuple[bool, str]:
     return _db.banSkinByUsername(username, reason)
 
@@ -62,10 +67,27 @@ def unban_skin_by_username(username: str) -> tuple[bool, str]:
     return _db.unbanSkinByUsername(username)
 
 
-def get_ban_state_by_username(username: str) -> tuple[bool, str]:
-    success, ban_state = _db.getBanStateByUsername(username)
-    if not success and isinstance(ban_state, str):
-        return (success, ban_state)
+def ban_by_username(username: str, reason: Optional[str] = None) -> tuple[bool, str]:
+    account = get_account_by_username(username)
+    if account is None:
+        return ErrorUsernameNotFound
     
-    reason = "Без указания причины" if isinstance(ban_state, bool) else ban_state
-    return (success, reason)
+    _block.banUser(account.telegramID, reason or "*Не указано*")
+    return (True, "Человек забанен")
+
+
+def unban_by_username(username: str) -> tuple[bool, str]:
+    account = get_account_by_username(username)
+    if account is None:
+        return ErrorUsernameNotFound
+    
+    _block.unbanUser(account.telegramID)
+    return (True, "Человек разбанен")
+
+
+def is_banned(uid: int) -> bool:
+    return _block.isBanned(uid)
+
+
+def get_banned_reason(uid: int) -> str:
+    return _block.getBannedReason(uid)

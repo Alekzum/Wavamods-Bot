@@ -1,7 +1,4 @@
-from .config import ADMIN_IDS
-from typing import Union
 from aiogram.filters import BaseFilter
-from aiogram.types import Message
 from http.client import responses
 import aiohttp
 import re
@@ -10,15 +7,6 @@ import re
 url_validator = re.compile(r"https?:\/\/(www\.)?([-a-zA-Z0-9@:%._\+~#=]{1,256})\.([a-zA-Z0-9()]{1,6})\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)\.(png|jpg|jpeg)")
 username_checker = re.compile(r"[a-zA-Z0-9]+")
 password_checker = re.compile(r"\w+")
-
-
-class AdminFilter(BaseFilter):
-    async def __call__(self, message: Message) -> bool:
-        return bool(message.from_user and isAdmin(message.from_user.id))
-
-
-def isAdmin(uid: int) -> bool:
-    return uid in ADMIN_IDS
 
 
 async def check_skin(skin_url) -> tuple[bool, str]:
