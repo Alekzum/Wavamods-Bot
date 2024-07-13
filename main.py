@@ -6,7 +6,6 @@ from aiogram_sqlite_storage.sqlitestore import SQLStorage  # type: ignore
 from aiogram.client.default import DefaultBotProperties
 from aiogram import Bot, Dispatcher
 import asyncio
-import pathlib
 
 
 check_platform()
