@@ -1,5 +1,6 @@
 # My files
 data/*.db
+data/*.json
 .vscode
 .venv
 test.py
