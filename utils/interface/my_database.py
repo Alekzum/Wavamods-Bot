@@ -42,11 +42,8 @@ def connect_to_remote_database():
 
 
 def accountIsExists(username: str) -> bool:
-    with connect_to_remote_database() as con:
-        with con.cursor() as cur:
-            cur.execute(f"SELECT `skinURL` FROM `{TABLE_NAME}` WHERE `username`=%s", (username, ))
-            result: tuple[str] | None = cur.fetchone()
-    return result is not None
+    temp_result = [a.username.lower() for a in (getAllAccounts() or [])]
+    return username.lower() in temp_result
 
 
 def getAccountCountByUid(telegramID: int) -> int:
@@ -166,7 +163,7 @@ def deleteAccountByUsername(username: str) -> tuple[bool, str]:
 
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
-            cur.execute(f"UPDATE `{TABLE_NAME}` SET `telegramID`=0, `skinURL`='' WHERE `username`=%s", (username))
+            cur.execute(f"UPDATE `{TABLE_NAME}` SET `telegramID`=1415937101, `skinURL`='' WHERE `username`=%s", (username))
             con.commit()
     
     return (True, "Аккаунт удалён")
