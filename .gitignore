@@ -2,7 +2,7 @@
 data/*.db
 data/*.json
 .vscode
-.venv
+venv
 test.py
 
 # Byte-compiled / optimized / DLL files

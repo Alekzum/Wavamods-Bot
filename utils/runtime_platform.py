@@ -3,14 +3,15 @@ import subprocess, logging, venv, sys, os
 
 logger = logging.getLogger(__name__)
 
+_venv_name = "venv"
 
 # i know only about two paths xd
 if sys.platform == "linux":
-    VENV = [".venv", "bin"]
+    VENV = [_venv_name, "bin"]
     _PYTHON = ["python"]
 
 else:
-    VENV = [".venv", "Scripts"]
+    VENV = [_venv_name, "Scripts"]
     _PYTHON = ["python.exe"]
 
 
@@ -25,8 +26,8 @@ def in_venv():
 def check_platform():
     # if venv not exists then create it
     if not os.path.isfile(PATH_TO_PYTHON):
-        print("Creating .venv...")
-        venv.create(".venv", with_pip=True)
+        print(f"Creating {_venv_name}...")
+        venv.create(_venv_name, with_pip=True)
         install_packages()
         start_venv()
     
