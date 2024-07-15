@@ -1,5 +1,6 @@
 from aiogram import Router
 from aiogram.types import Message
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
 from utils.my_checkers import check_username, check_password
@@ -14,7 +15,7 @@ rt = Router()
 
 
 @rt.message(Command("cancel"))
-async def fsm_register_cancel(message: Message, state: FSMContext):
+async def cmd_cancel(message: Message, state: FSMContext):
     await state.set_state(MenuStates.menu)
     await message.answer("Хорошо. Вы теперь в меню. ")
 
