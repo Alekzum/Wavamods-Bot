@@ -26,7 +26,7 @@ def in_venv():
 def check_platform():
     # if venv not exists then create it
     if not os.path.isfile(PATH_TO_PYTHON):
-        print(f"Creating {_venv_name}...")
+        # print(f"Creating {_venv_name}...")
         venv.create(_venv_name, with_pip=True)
         install_packages()
         start_venv()
@@ -38,33 +38,33 @@ def check_platform():
 def install_packages():
     custom_requirements = "requirements.txt"
     command = [PATH_TO_PYTHON, "-m", "pip", "install", "-r", custom_requirements]
-    print(f"Starting install packages from {custom_requirements!r}")
+    # print(f"Starting install packages from {custom_requirements!r}")
 
     p = subprocess.Popen(command)
     returncode = p.wait()
     if returncode != 0:
-        logger.error("idk what happened. write to me, maybe i can do something: https://a1ekzfame.t.me")
+        # logger.error("idk what happened. write to me, maybe i can do something: https://a1ekzfame.t.me")
         exit(returncode)
-    print("Packages installed")
+    # print("Packages installed")
     return
 
 
 def install_package(package: str) -> bool:
     command = [PATH_TO_PYTHON, "-m", "pip", "install", package]
-    print(f"Starting install package {package!r}")
+    # print(f"Starting install package {package!r}")
 
     p = subprocess.Popen(command)
     returncode = p.wait()
     if returncode != 0:
-        logger.error("idk what happened. something goes wrong")
+        # logger.error("idk what happened. something goes wrong")
         return False
-    print("Package installed")
+    # print("Package installed")
     return True
 
 
 def start_venv():
     command = [PATH_TO_PYTHON, "main.py", "--in-venv"]
-    print(f"Starting main.py with {PATH_TO_PYTHON!r}")
+    # print(f"Starting main.py with {PATH_TO_PYTHON!r}")
     p = subprocess.Popen(command)
     returncode = p.wait()
     exit(returncode)

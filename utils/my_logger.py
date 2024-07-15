@@ -33,9 +33,9 @@ FORMAT = '{asctime} - [{levelname}] {filename}:{funcName}:{lineno} {name} - {mes
 LEVEL = logging.INFO
 
 
-streamHandler = logging.StreamHandler()
-streamHandler.addFilter(CooldownFilter())
+fileHandler = logging.FileHandler(filename="log.log")
+fileHandler.addFilter(CooldownFilter())
 
-logging.basicConfig(format=FORMAT, level=LEVEL, style="{", handlers=[streamHandler])
+logging.basicConfig(format=FORMAT, level=LEVEL, style="{", handlers=[fileHandler])
 logging.getLogger("aiogram").setLevel(logging.INFO)
 logging.getLogger("aiohttp").setLevel(logging.WARNING)

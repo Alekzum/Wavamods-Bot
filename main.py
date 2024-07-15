@@ -2,7 +2,7 @@ from utils.runtime_platform import check_platform, in_venv
 
 
 inVenv = in_venv()
-print(f"main.py started {'' if inVenv else 'not'} in venv")
+# print(f"main.py started {'' if inVenv else 'not'} in venv")
 check_platform()
 
 
@@ -24,7 +24,11 @@ dp.message.middleware(CooldownMiddleware(1))
 
 async def main():
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="html"))
-    await dp.start_polling(bot)
+    print("Запуск бота...")
+    try:
+        await dp.start_polling(bot)
+    except KeyboardInterrupt:
+        print("Выключаю бота...")
 
 if __name__ == "__main__":
     asyncio.run(main())
