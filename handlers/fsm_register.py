@@ -13,6 +13,12 @@ logger = logging.getLogger(__name__)
 rt = Router()
 
 
+@rt.message(Command("cancel"))
+async def fsm_register_cancel(message: Message, state: FSMContext):
+    await state.set_state(MenuStates.menu)
+    await message.answer("Хорошо. Вы теперь в меню. ")
+
+
 @rt.message(RegisterStates.input_username)
 async def fsm_register_username(message: Message, state: FSMContext):
     username = message.text
