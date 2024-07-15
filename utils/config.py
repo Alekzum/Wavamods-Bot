@@ -38,4 +38,5 @@ DB_IP = get_field("DB_IP")
 DB_LOGIN = get_field("DB_LOGIN")
 DB_PASSWORD = get_field("DB_PASSWORD")
 DB_NAME = get_field("DB_NAME")
+DB_SALT: str = get_field("DB_SALT")
 ADMIN_IDS: list[int] = [int(a) for a in get_field("ADMIN_IDS").replace(" ", "").split(",")]

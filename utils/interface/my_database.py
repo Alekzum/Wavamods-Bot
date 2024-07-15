@@ -1,10 +1,12 @@
 # from html.parser import escape, unescape
-from ..config import DB_IP, DB_NAME, DB_LOGIN, DB_PASSWORD
+from ..config import DB_IP, DB_NAME, DB_LOGIN, DB_PASSWORD, DB_SALT
 from ..my_classes import Account
 from typing import Optional, TypedDict, Literal, Any
 import pymysql.cursors  # type: ignore
 import pymysql  # type: ignore
 import logging
+import hashlib
+from io import StringIO
 
 
 TABLE_NAME = "users"
@@ -22,6 +24,10 @@ class ACCOUNT_TUPLE(TypedDict):
     skinBanned: bool
     skinBannedReason: Optional[str]
     telegramID: int
+
+
+def text_to_md5(text: str) -> int:
+    return hash(hashlib.md5((text + DB_SALT).encode('utf-8')))
 
 
 def handle_pymysql_errors(func):
@@ -91,9 +97,11 @@ def addUser(telegramID: int, username: str, password: str, skinURL: Optional[str
     if skinURL is None:
         skinURL = ""
         
+    _password = text_to_md5(password)
+
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
-            cur.execute(f"INSERT INTO `{TABLE_NAME}` (`username`, `password`, `skinURL`, `telegramID`) VALUES (%s, %s, %s, %s)", (username, password, skinURL, telegramID, ))
+            cur.execute(f"INSERT INTO `{TABLE_NAME}` (`username`, `password`, `skinURL`, `telegramID`) VALUES (%s, %s, %s, %s)", (username, _password, skinURL, telegramID, ))
             con.commit()
     
     return (True, "Пользователь добавлен в базу данных")
@@ -106,7 +114,7 @@ def changeSkin(username: str, password: str, skinURL: str) -> tuple[bool, str]:
     if user is None:
         return ErrorUsernameNotFound
     
-    elif user.password != password:
+    elif text_to_md5(user.password) != text_to_md5(password):
         return ErrorPasswordIsWrong
 
     elif user.skinBanned:
@@ -127,12 +135,14 @@ def changePassword(username: str, old_password: str, new_password: str) -> tuple
     if user is None:
         return ErrorUsernameNotFound
     
-    elif user.password != old_password:
+    elif text_to_md5(user.password) != text_to_md5(old_password):
         return ErrorPasswordIsWrong
+    
+    _new_password = text_to_md5(new_password)
 
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
-            cur.execute(f"UPDATE `{TABLE_NAME}` SET password=%s WHERE `username`=%s", (new_password, username, ))
+            cur.execute(f"UPDATE `{TABLE_NAME}` SET password=%s WHERE `username`=%s", (_new_password, username, ))
             con.commit()
     
     return (True, "Пароль пользователя обновлён")
