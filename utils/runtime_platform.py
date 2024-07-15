@@ -20,7 +20,7 @@ PATH_TO_PYTHON = os.sep.join(PYTHON)
 
 
 def in_venv():
-    return sys.prefix != sys.base_prefix
+    return (sys.prefix != sys.base_prefix) or (len(sys.argv)>1 and sys.argv[2] == "--in-venv")
 
 
 def check_platform():
@@ -63,7 +63,7 @@ def install_package(package: str) -> bool:
 
 
 def start_venv():
-    command = [PATH_TO_PYTHON, "main.py"]
+    command = [PATH_TO_PYTHON, "main.py", "--in-venv"]
     print(f"Starting main.py with {PATH_TO_PYTHON!r}")
     p = subprocess.Popen(command)
     returncode = p.wait()
