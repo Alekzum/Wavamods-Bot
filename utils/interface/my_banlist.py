@@ -9,11 +9,6 @@ BANS_FILENAME = str(BANS_PATH)
 SPLITTER = ","
 
 
-# uid INTEGER UNIQUE,
-# banned INTEGER,
-# bannedReason TEXT
-
-
 class FIELDS(TypedDict):
     banned: bool
     bannedReason: None | str
@@ -68,43 +63,24 @@ def banUser(uid: int, reason: str):
     raw = load_raw()
     raw[uid] = dict(banned=True, bannedReason=reason)
     save_raw(raw)
-#     with sqlite3.connect(BANS_FILENAME) as con:
-#         cur = con.cursor()
-#         cur.execute(f"INSERT INTO {TABLE_NAME} (uid, banned, bannedReason) VALUES (?, 1, ?)", (uid, reason))
-#         con.commit()
 
 
 def unbanUser(uid: int):
     raw = load_raw()
     raw[uid] = dict(banned=False, bannedReason=None)
     save_raw(raw)
-#     with sqlite3.connect(BANS_FILENAME) as con:
-#         cur = con.cursor()
-#         cur.execute(f"DELETE FROM {TABLE_NAME} WHERE uid=?", (uid, ))
-#         con.commit()
 
 
 def getBannedUsers() -> list[int] | list:
     raw = load_raw()
     result = [k for (k, v) in raw.items() if v.get("banned")]
     return result
-    
-#     with sqlite3.connect(BANS_FILENAME) as con:
-#         cur = con.cursor()
-#         cur.execute(f"SELECT uid FROM {TABLE_NAME} WHERE banned=1", ())
-#         results = cur.fetchall()
-#     return results or []
 
 
 def getBannedReason(uid: int) -> str:
     raw = load_raw()
     result = raw.get(uid).get("bannedReason", "*не указано*")
     return result
-#     with sqlite3.connect(BANS_FILENAME) as con:
-#         cur = con.cursor()
-#         cur.execute(f"SELECT bannedReason FROM {TABLE_NAME} WHERE uid=?", (uid, ))
-#         result = cur.fetchone()
-#     return result or "*не указано*"
 
 
 def isBanned(uid: int) -> bool:
