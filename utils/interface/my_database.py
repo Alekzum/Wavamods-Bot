@@ -159,6 +159,20 @@ def banSkinByUsername(username: str, reason: Optional[str] = None) -> tuple[bool
 
 
 @handle_pymysql_errors
+def deleteAccountByUsername(username: str) -> tuple[bool, str]:
+    account = getAccountByUsername(username)
+    if account is None:
+        return ErrorUsernameNotFound
+
+    with connect_to_remote_database() as con:
+        with con.cursor() as cur:
+            cur.execute(f"UPDATE `{TABLE_NAME}` SET `telegramID`=0, `skinURL`='' WHERE `username`=%s", (username))
+            con.commit()
+    
+    return (True, "Аккаунт удалён")
+
+
+@handle_pymysql_errors
 def unbanSkinByUsername(username: str) -> tuple[bool, str]:
     account = getAccountByUsername(username)
     if account is None:

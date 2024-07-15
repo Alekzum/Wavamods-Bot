@@ -2,7 +2,8 @@ from aiogram import Router, Bot
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from utils.interface import get_all_accounts, ban_skin_by_username, unban_skin_by_username, ban_by_username, unban_by_username, get_account_by_username
+from utils.interface import (get_all_accounts, ban_skin_by_username, unban_skin_by_username, ban_by_username, unban_by_username, 
+                             get_account_by_username, delete_account_by_username)
 from utils.fsm.my_states import MenuStates
 from utils.fsm.my_filters import AdminFilter
 import logging
@@ -28,7 +29,7 @@ async def cmd_admin(message: Message):
 
 
 @rt.message(MenuStates.menu, AdminFilter(), Command("ban_skin"))
-async def cmd_ban_skin(message: Message):
+async def cmd_ban_skin(message: Message, bot: Bot):
     if message.from_user is None:
         return
     if message.text is None:
@@ -37,26 +38,28 @@ async def cmd_ban_skin(message: Message):
     args = message.text.split(" ")
 
     if len(args) < 2:
-        await message.answer("Надо указать ник аккаунта и причину")
+        await message.answer("Надо указать ник аккаунта и, опционально, причину")
         return
     
     _, username, *reason_list = args
 
-    if reason_list:
-        reason = " ".join(reason_list)
-    else:
-        reason = None
+    reason = " ".join(reason_list) or "*не указано*"
     
     success, msg = ban_skin_by_username(username, reason)
     if not success:
         await message.answer(f"Что-то не так при выдаче бана: {msg}")
         return
-    
+
     await message.answer(f"Бан выдан")
+
+    account = get_account_by_username(username)
+    assert account is not None
+    try: await bot.send_message(account.telegramID, f"Вашему аккаунту {username} заблокировали возможность менять скин по причине {reason}")
+    except Exception: pass
 
 
 @rt.message(MenuStates.menu, AdminFilter(), Command("unban_skin"))
-async def cmd_unban_skin(message: Message):
+async def cmd_unban_skin(message: Message, bot: Bot):
     if message.from_user is None:
         return
     if message.text is None:
@@ -77,6 +80,11 @@ async def cmd_unban_skin(message: Message):
 
     await message.answer(f"Бан снят")
 
+    account = get_account_by_username(username)
+    assert account is not None
+    try: await bot.send_message(account.telegramID, f"Ваш аккаунт {username} теперь может менять скин")
+    except Exception: pass
+
 
 @rt.message(MenuStates.menu, AdminFilter(), Command("ban"))
 async def cmd_ban(message: Message, bot: Bot):
@@ -88,12 +96,12 @@ async def cmd_ban(message: Message, bot: Bot):
     args = message.text.split(" ")
 
     if len(args) <= 2:
-        await message.answer("Надо указать ник аккаунта и причину")
+        await message.answer("Надо указать ник аккаунта и, опционально, причину")
         return
     
     _, username, *reason_list = args
 
-    reason = " ".join(reason_list)
+    reason = " ".join(reason_list) or "*не указано*"
     
     success, msg = ban_by_username(username, reason)
     if not success:
@@ -104,7 +112,6 @@ async def cmd_ban(message: Message, bot: Bot):
 
     account = get_account_by_username(username)
     assert account is not None
-
     try: await bot.send_message(account.telegramID, f"Вы были забанены по причине {reason}")
     except Exception: pass
 
@@ -129,10 +136,41 @@ async def cmd_unban(message: Message, bot: Bot):
         await message.answer(f"Что-то не так при снятии бана: {msg}")
         return
 
-    await message.answer(f"Бан снят. Теперь игрок, имеющий аккаунт {username}, сможет использовать бота.")
-
     account = get_account_by_username(username)
     assert account is not None
 
-    try: await bot.send_message(account.telegramID, f"Вы были разбанены")
+    await message.answer(f"Бан снят. Теперь игрок, имеющий аккаунт {username}, сможет использовать бота.")
+
+    try: await bot.send_message(account.telegramID, "Вы были разбанены")
+    except Exception: pass
+
+
+@rt.message(MenuStates.menu, AdminFilter(), Command("delete_account"))
+async def cmd_delete_account(message: Message, bot: Bot):
+    if message.from_user is None:
+        return
+    if message.text is None:
+        return
+
+    args = message.text.split(" ")
+
+    if len(args) <= 2:
+        await message.answer("Надо указать ник аккаунта и, опционально, причину")
+        return
+    
+    _, username, *reason_list = args
+
+    reason = " ".join(reason_list) or "*не указано*"
+
+    account = get_account_by_username(username)
+    assert account is not None
+    
+    success, msg = delete_account_by_username(username)
+    if not success:
+        await message.answer(f"Что-то не так при удалении аккаунта: {msg}")
+        return
+
+    await message.answer(f"Аккаунт {username!r} удалён")
+
+    try: await bot.send_message(account.telegramID, f"Ваш аккаунт {username!r} удалён по причине {reason}")
     except Exception: pass

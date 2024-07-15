@@ -59,6 +59,10 @@ def get_account_by_username(username: str) -> _Account | None:
 # Admin things
 
 
+def delete_account_by_username(username: str) -> tuple[bool, str]:
+    return _db.deleteAccountByUsername(username)
+
+
 def ban_skin_by_username(username: str, reason: Optional[str] = None) -> tuple[bool, str]:
     return _db.banSkinByUsername(username, reason)
 
