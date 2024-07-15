@@ -95,7 +95,7 @@ async def cmd_ban(message: Message, bot: Bot):
 
     args = message.text.split(" ")
 
-    if len(args) <= 2:
+    if len(args) < 2:
         await message.answer("Надо указать ник аккаунта и, опционально, причину")
         return
     
@@ -154,7 +154,7 @@ async def cmd_delete_account(message: Message, bot: Bot):
 
     args = message.text.split(" ")
 
-    if len(args) <= 2:
+    if len(args) < 2:
         await message.answer("Надо указать ник аккаунта и, опционально, причину")
         return
     
