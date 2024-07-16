@@ -5,5 +5,5 @@ from . import config
 from . import my_middleware
 from . import my_classes
 from . import interface
-from . import my_routers
+from . import my_functions
 from . import my_checkers

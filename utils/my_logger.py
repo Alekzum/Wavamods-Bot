@@ -35,7 +35,13 @@ LEVEL = logging.INFO
 
 fileHandler = logging.FileHandler(filename="log.log")
 fileHandler.addFilter(CooldownFilter())
+fileHandler.setLevel(logging.INFO)
 
-logging.basicConfig(format=FORMAT, level=LEVEL, style="{", handlers=[fileHandler])
+streamHandler = logging.StreamHandler()
+streamHandler.addFilter(CooldownFilter())
+streamHandler.setLevel(logging.ERROR)
+
+logging.basicConfig(format=FORMAT, level=LEVEL, style="{", handlers=[fileHandler, streamHandler])
+
 logging.getLogger("aiogram").setLevel(logging.INFO)
 logging.getLogger("aiohttp").setLevel(logging.WARNING)

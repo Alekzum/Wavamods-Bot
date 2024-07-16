@@ -6,8 +6,9 @@ inVenv = in_venv()
 check_platform()
 
 
+from contextlib import suppress
 from utils.config import BOT_TOKEN, FSM_PATH
-from utils.my_routers import include_routers
+from utils.my_functions import include_routers, pooling
 from utils.my_middleware import CooldownMiddleware, BannedMiddleware
 from aiogram_sqlite_storage.sqlitestore import SQLStorage  # type: ignore
 from aiogram.client.default import DefaultBotProperties
@@ -24,11 +25,12 @@ dp.message.middleware(CooldownMiddleware(1))
 
 async def main():
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="html"))
-    print("Запуск бота...")
-    try:
-        await dp.start_polling(bot)
-    except KeyboardInterrupt:
-        print("Выключаю бота...")
+    print("Включение бота...")
+
+    with suppress(KeyboardInterrupt, asyncio.exceptions.CancelledError):
+        await pooling(dp, bot)
+
+    print("Бот выключен")
 
 if __name__ == "__main__":
     asyncio.run(main())
