@@ -1,4 +1,5 @@
 import subprocess, logging, venv, sys, os
+from contextlib import suppress
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,14 @@ def in_venv():
     return (sys.prefix != sys.base_prefix) or (len(sys.argv)>1 and sys.argv[2] == "--in-venv")
 
 
+def run_popen(command) -> int:
+    p = subprocess.Popen(command)
+    with suppress(KeyboardInterrupt):
+        returncode = p.wait()
+        return returncode
+    return -1
+
+
 def check_platform():
     # if venv not exists then create it
     if not os.path.isfile(PATH_TO_PYTHON):
@@ -40,8 +49,7 @@ def install_packages():
     command = [PATH_TO_PYTHON, "-m", "pip", "install", "-r", custom_requirements]
     # print(f"Starting install packages from {custom_requirements!r}")
 
-    p = subprocess.Popen(command)
-    returncode = p.wait()
+    returncode = run_popen(command)
     if returncode != 0:
         # logger.error("idk what happened. write to me, maybe i can do something: https://a1ekzfame.t.me")
         exit(returncode)
@@ -53,8 +61,7 @@ def install_package(package: str) -> bool:
     command = [PATH_TO_PYTHON, "-m", "pip", "install", package]
     # print(f"Starting install package {package!r}")
 
-    p = subprocess.Popen(command)
-    returncode = p.wait()
+    returncode = run_popen(command)
     if returncode != 0:
         # logger.error("idk what happened. something goes wrong")
         return False
@@ -65,8 +72,7 @@ def install_package(package: str) -> bool:
 def start_venv():
     command = [PATH_TO_PYTHON, "main.py", "--in-venv"]
     # print(f"Starting main.py with {PATH_TO_PYTHON!r}")
-    p = subprocess.Popen(command)
-    returncode = p.wait()
+    returncode = run_popen(command)
     exit(returncode)
 
 
