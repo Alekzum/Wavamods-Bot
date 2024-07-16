@@ -211,3 +211,17 @@ def realDeleteAccountByUsername(username: str) -> tuple[bool, str]:
             con.commit()
     
     return (True, "Аккаунт удалён")
+
+
+@handle_pymysql_errors
+def changeOwner(username: str, new_id: int) -> tuple[bool, str]:
+    account = getAccountByUsername(username)
+    if account is None:
+        return ErrorUsernameNotFound
+
+    with connect_to_remote_database() as con:
+        with con.cursor() as cur:
+            cur.execute(f"UPDATE `{TABLE_NAME}` SET `telegramID`=%s WHERE `username`=%s", (new_id, username))
+            con.commit()
+    
+    return (True, "Аккаунт удалён")

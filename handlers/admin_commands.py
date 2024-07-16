@@ -3,7 +3,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 
 from utils.interface import (get_all_accounts, ban_skin_by_username, unban_skin_by_username, ban_by_username, unban_by_username, 
-                             get_account_by_username, real_delete_account_by_username)
+                             get_account_by_username, real_delete_account_by_username, change_owner)
 from utils.fsm.my_states import MenuStates
 from utils.fsm.my_filters import AdminFilter
 import logging
@@ -25,7 +25,20 @@ async def cmd_admin(message: Message):
     results = [str(account) for account in accounts]
     text = ban_hint + (splitter.join([""] + results) if results else "  Никого нет в базе данных...")
     await message.answer(text)
+
+
+@rt.message(MenuStates.menu, AdminFilter(), Command("admin"))
+async def cmd_admin_list(message: Message, bot: Bot):
+    await message.answer(
+"""Все доступные команды:
+    • /ban_skin Ник Причина
+    • /unban_skin Ник
+    • /ban Ник Причина
+    • /unban Ник
+    • /delete_account Ник Причина
+    • /change_owner Ник ID_нового_владельца
     
+""")
 
 
 @rt.message(MenuStates.menu, AdminFilter(), Command("ban_skin"))
@@ -172,5 +185,37 @@ async def cmd_delete_account(message: Message, bot: Bot):
 
     await message.answer(f"Аккаунт {username!r} удалён")
 
-    try: await bot.send_message(account.telegramID, f"Ваш аккаунт {username!r} удалён по причине {reason}")
-    except Exception: pass
+    # try: await bot.send_message(account.telegramID, f"Ваш аккаунт {username!r} удалён по причине {reason}")
+    # except Exception: pass
+
+
+@rt.message(MenuStates.menu, AdminFilter(), Command("change_owner"))
+async def cmd_change_owner(message: Message, bot: Bot):
+    if message.from_user is None:
+        return
+    if message.text is None:
+        return
+
+    args = message.text.split(" ")
+
+    if len(args) != 3:
+        await message.answer("Надо указать ник аккаунта и ID нового хозяина акканунта")
+        return
+    
+    _, username, new_id = args
+
+    account = get_account_by_username(username)
+    assert account is not None
+
+    if not new_id.isdecimal():
+        await message.answer("ID - не число.")
+        return
+    
+    _new_id = int(new_id)
+
+    success, msg = change_owner(username, _new_id)
+    if not success:
+        await message.answer(f"Что-то не так при передачи аккаунта: {msg}")
+        return
+
+    await message.answer(f"Аккаунт {username!r} успешно передан")

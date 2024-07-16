@@ -38,6 +38,7 @@ async def update_commands(_: Message, bot: Bot):
                 BotCommand(command="skin", description="Установить скин"),
                 BotCommand(command="changepass", description="Изменить пароль от аккаунта"),
                 BotCommand(command="profiles", description="Перечислить все ваши аккаунты"),
+                BotCommand(command="admin", description="Если вы админ - показать все админ-команды"),
                 # BotCommand(command="profile", description="Получить информацию об вашем аккаунте"),
                 BotCommand(command="privacy", description="Наша политика приватности")
             ]

@@ -99,3 +99,7 @@ def is_banned(uid: int) -> bool:
 
 def get_banned_reason(uid: int) -> str:
     return _block.getBannedReason(uid)
+
+
+def change_owner(username: str, new_id: int) -> tuple[bool, str]:
+    return _db.changeOwner(username, new_id)
