@@ -108,15 +108,11 @@ def getAllAccounts() -> list[Account] | None:
 
 
 @handle_pymysql_errors
-def changeSkin(username: str, password: str, skinURL: str) -> tuple[bool, str]:
+def changeSkin(username: str, skinURL: str) -> tuple[bool, str]:
     """return tuple like (status, message)"""
     user = getAccountByUsername(username)
     if user is None:
         return ErrorUsernameNotFound
-    
-    elif user.password != text_to_md5(password):
-        # print(f"{user.password=}, {password=}, {text_to_md5(password)=}")
-        return ErrorPasswordIsWrong
 
     elif user.skinBanned:
         return (False, "Аккаунту запрещено менять скин. Причина: " + (user.skinBannedReason or "*Не указано*"))
@@ -130,15 +126,11 @@ def changeSkin(username: str, password: str, skinURL: str) -> tuple[bool, str]:
 
 
 @handle_pymysql_errors
-def changePassword(username: str, old_password: str, new_password: str) -> tuple[bool, str]:
+def changePassword(username: str, new_password: str) -> tuple[bool, str]:
     """return tuple like (status, message)"""
     user = getAccountByUsername(username)
     if user is None:
         return ErrorUsernameNotFound
-    
-    elif user.password != text_to_md5(old_password):
-        # print(f"{user.password=}, {old_password=}, {text_to_md5(old_password)=}")
-        return ErrorPasswordIsWrong
     
     _new_password = text_to_md5(new_password)
 

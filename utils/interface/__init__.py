@@ -17,12 +17,12 @@ def get_usernames_by_uid(uid: int) -> list[str] | None:
     return [n.username for n in (_db.getAccountsByUid(uid) or [])]
 
 
-def change_skin(username: str, password: str, skinURL: str) -> tuple[bool, str]:
+def change_skin(username: str, skinURL: str) -> tuple[bool, str]:
     success, isBanned = _db.getBanStateByUsername(username)
     if not success and isinstance(isBanned, str):
         return (success, isBanned)
     elif isinstance(isBanned, bool) and not isBanned:
-        return _db.changeSkin(username, password, skinURL)
+        return _db.changeSkin(username, skinURL)
     
     account = _db.getAccountByUsername(username)
     if account is None:
@@ -40,8 +40,8 @@ def account_is_exists(username: str) -> bool:
     return _db.accountIsExists(username)
 
 
-def change_password(username: str, old_password: str, new_password: str) -> tuple[bool, str]:
-    return _db.changePassword(username, old_password, new_password)
+def change_password(username: str, new_password: str) -> tuple[bool, str]:
+    return _db.changePassword(username, new_password)
 
 
 def get_account_count_by_uid(uid: int) -> int:

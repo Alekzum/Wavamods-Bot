@@ -104,9 +104,8 @@ async def cmd_skin(message: Message):
         return
 
     account = accounts[usernames.index(username)]
-    password = account.password
 
-    status, msg = change_skin(username=username, password=password, skinURL=url)
+    status, msg = change_skin(username=username, skinURL=url)
     if not status:
         await message.answer(f"Что-то пошло не так при изменении скина. Подробнее: {msg}")
         return
@@ -126,7 +125,8 @@ async def cmd_profiles(message: Message):
 
     accounts_string = [str(acc) for acc in accounts]
     result = splitter.join([""] + accounts_string)
-    await message.answer(f"Все ваши аккаунты: {result}")
+    await message.answer(f"Все ваши аккаунты: {result}.\nВнимание! Ваши пароли зашифрованы. Если вы забыли пароль, "
+                         "то можете поменять его командой /changepass аккаунт новый_пароль")
 
 
 @rt.message(MenuStates.menu, Command("changepass"))
@@ -160,7 +160,7 @@ async def cmd_changepass(message: Message):
         await message.answer(msg)
         return
     
-    success, msg = change_password(username, account.password, password)
+    success, msg = change_password(username, password)
     if not success:
         await message.answer(f"Что-то не так при смене пароля: {msg}")
         return
