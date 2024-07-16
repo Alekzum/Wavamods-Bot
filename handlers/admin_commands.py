@@ -3,7 +3,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 
 from utils.interface import (get_all_accounts, ban_skin_by_username, unban_skin_by_username, ban_by_username, unban_by_username, 
-                             get_account_by_username, delete_account_by_username)
+                             get_account_by_username, real_delete_account_by_username)
 from utils.fsm.my_states import MenuStates
 from utils.fsm.my_filters import AdminFilter
 import logging
@@ -165,7 +165,7 @@ async def cmd_delete_account(message: Message, bot: Bot):
     account = get_account_by_username(username)
     assert account is not None
     
-    success, msg = delete_account_by_username(username)
+    success, msg = real_delete_account_by_username(username)
     if not success:
         await message.answer(f"Что-то не так при удалении аккаунта: {msg}")
         return
