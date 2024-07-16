@@ -59,6 +59,10 @@ def get_account_by_username(username: str) -> _Account | None:
 # Admin things
 
 
+def real_delete_account_by_username(username: str) -> tuple[bool, str]:
+    return _db.realDeleteAccountByUsername(username)
+
+
 def delete_account_by_username(username: str) -> tuple[bool, str]:
     return _db.deleteAccountByUsername(username)
 

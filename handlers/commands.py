@@ -125,7 +125,7 @@ async def cmd_profiles(message: Message):
 
     accounts_string = [str(acc) for acc in accounts]
     result = splitter.join([""] + accounts_string)
-    await message.answer(f"Все ваши аккаунты: {result}.\nВнимание! Ваши пароли зашифрованы. Если вы забыли пароль, "
+    await message.answer(f"Все ваши аккаунты: {result}.\n\n\nВнимание! Ваши пароли зашифрованы. Если вы забыли пароль, "
                          "то можете поменять его командой /changepass аккаунт новый_пароль")
 
 
