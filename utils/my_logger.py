@@ -30,18 +30,19 @@ class CooldownFilter(logging.Filter):
 
 LOGGING_COOLDOWN = 3
 FORMAT = '{asctime} - [{levelname}] {filename}:{funcName}:{lineno} {name} - {message}'
-LEVEL = logging.INFO
+INFO = logging.INFO
+ERROR = logging.ERROR
 
 
 fileHandler = logging.FileHandler(filename="log.log")
 fileHandler.addFilter(CooldownFilter())
-fileHandler.setLevel(logging.INFO)
+fileHandler.setLevel(INFO)
 
 streamHandler = logging.StreamHandler()
 streamHandler.addFilter(CooldownFilter())
-streamHandler.setLevel(logging.ERROR)
+streamHandler.setLevel(INFO)
 
-logging.basicConfig(format=FORMAT, level=LEVEL, style="{", handlers=[fileHandler, streamHandler])
+logging.basicConfig(format=FORMAT, level=INFO, style="{", handlers=[fileHandler, streamHandler])
 
-logging.getLogger("aiogram").setLevel(logging.INFO)
-logging.getLogger("aiohttp").setLevel(logging.WARNING)
+logging.getLogger("aiogram").setLevel(INFO)
+logging.getLogger("aiohttp").setLevel(INFO)

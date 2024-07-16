@@ -38,7 +38,7 @@ async def fsm_register_username(message: Message, state: FSMContext):
         await message.answer("Данный ник уже занят. Попробуйте другой ник")
         return
     
-    await state.update_data(dict(username=username))
+    await state.update_data({"username":username})
     await state.set_state(RegisterStates.input_password)
     await message.answer(f"Хорошо, ваш ник {username}. Теперь нужно ввести пароль (от 6 символов)." + cancel_hint)
 
