@@ -36,7 +36,7 @@ def handle_pymysql_errors(func):
             return func(*args, **kwargs)
         except pymysql.err.Error as ex:
             logger.error(repr(ex))
-            return (False, "Произошла ошибка.")
+            return (False, f"Произошла ошибка {ex!r} при работе с БД")
     return inner
 
 
