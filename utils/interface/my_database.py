@@ -9,7 +9,7 @@ import hashlib
 from io import StringIO
 
 
-TABLE_NAME = "user"
+TABLE_NAME = "users"
 logger = logging.getLogger(__name__)
 
 
