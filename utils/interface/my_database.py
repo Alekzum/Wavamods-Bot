@@ -26,10 +26,6 @@ class ACCOUNT_TUPLE(TypedDict):
     telegramID: int
 
 
-def text_to_md5(text: str) -> str:
-    return hashlib.md5((text + DB_SALT).encode('utf-8')).hexdigest()
-
-
 def handle_pymysql_errors(func):
     def inner(*args, **kwargs) -> Any | tuple[Literal[False], str]:
         try:
@@ -70,12 +66,10 @@ def addUser(telegramID: int, username: str, password: str, skinURL: Optional[str
 
     if skinURL is None:
         skinURL = ""
-        
-    _password = text_to_md5(password)
 
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
-            cur.execute(f"INSERT INTO `{TABLE_NAME}` (`username`, `password`, `skinURL`, `telegramID`) VALUES (%s, %s, %s, %s)", (username, _password, skinURL, telegramID, ))
+            cur.execute(f"INSERT INTO `{TABLE_NAME}` (`username`, `password`, `skinURL`, `telegramID`) VALUES (%s, %s, %s, %s)", (username, password, skinURL, telegramID, ))
             con.commit()
     
     return (True, "Пользователь добавлен в базу данных")
@@ -131,12 +125,10 @@ def changePassword(username: str, new_password: str) -> tuple[bool, str]:
     user = getAccountByUsername(username)
     if user is None:
         return ErrorUsernameNotFound
-    
-    _new_password = text_to_md5(new_password)
 
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
-            cur.execute(f"UPDATE `{TABLE_NAME}` SET password=%s WHERE `username`=%s", (_new_password, username, ))
+            cur.execute(f"UPDATE `{TABLE_NAME}` SET password=%s WHERE `username`=%s", (new_password, username, ))
             con.commit()
     
     return (True, "Пароль пользователя обновлён")
