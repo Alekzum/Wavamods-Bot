@@ -21,7 +21,7 @@ class Account:
     password: str
     skinURL: str
     telegramID: int
-    skinBanned: bool
+    skinBanned: Optional[bool] = None
     skinBannedReason: Optional[str] = None
 
     def __str__(self) -> str:
@@ -29,5 +29,5 @@ class Account:
                 f"{('Причина запрета: ' + (self.skinBannedReason or '*не указано')) if self.skinBanned else ''}")
     
     def __repr__(self) -> str:
-        username, password, skinURL = self.username, self.password, self.skinURL
-        return f"""utils.my_classes.Account({username=}, {password=}, {skinURL=})"""
+        username, password, skinURL, telegramID, skinBanned, skinBannedReason = self.username, self.password, self.skinURL, self.telegramID, self.skinBanned, self.skinBannedReason,
+        return f"""Account({username=}, {password=}, {skinURL=}, {telegramID=}, {skinBanned=}, {skinBannedReason=})"""

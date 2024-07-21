@@ -9,38 +9,28 @@ import logging
 
 
 cancel_hint = "\nЕсли хотите отменить текущее действие, используйте команду /cancel"
-splitter = "\n\n • "
+SPLITTER = "\n\n • "
 logger = logging.getLogger(__name__)
 rt = Router()
 
 
 @rt.message(MenuStates.menu, AdminFilter(), Command("admin"))
-async def cmd_admin(message: Message):
+async def cmd_admin_list(message: Message):
+    all_commands = """Все доступные команды:
+    • /admin
+    • /ban_skin Ник [Причина] - заблокировать возможность менять скин на аккаунте
+    • /unban_skin Ник - разблокировать возможность менять скин на аккаунте
+    • /ban Ник [Причина] - забанить аккаунт
+    • /unban Ник - разбанить аккаунт 
+    • /delete_account Ник [Причина] - удалить аккаунт
+    • /change_owner Ник ID_нового_владельца - поменять владельца аккаунта
+"""
     success, accounts = interface.get_all_accounts()
     if not success: return await message.answer(f"Что-то пошло не так при получении всех аккаунтов: {accounts!r}")
-    assert isinstance(accounts, list), "wth"
-    ban_hint = "Можно удалить аккаунт с помощью `/delete_account ник`\n\
-Можно убрать возможность менять скин у человека при помощи `/ban_skin ник [причина]`, или снять с помощью `/unban_skin ник`\n\
-Аккаунты в базе данных:"
-
-    results = [str(account) for account in accounts]
-    text = ban_hint + (splitter.join([""] + results) if results else "  Никого нет в базе данных...")
+    accounts_string = SPLITTER.join([repr(account) for account in accounts])
+    text = "\n\n".join([all_commands, f"Все зарегистрированные аккаунты: {SPLITTER}{accounts_string}"])
     await message.answer(text)
 
-
-@rt.message(MenuStates.menu, AdminFilter(), Command("admin"))
-async def cmd_admin_list(message: Message):
-    await message.answer(
-"""Все доступные команды:
-    • /admin
-    • /ban_skin Ник [Причина]
-    • /unban_skin Ник
-    • /ban Ник [Причина]
-    • /unban Ник
-    • /delete_account Ник [Причина]
-    • /change_owner Ник ID_нового_владельца
-    
-""")
 
 
 @rt.message(MenuStates.menu, AdminFilter(), Command("ban_skin"))
