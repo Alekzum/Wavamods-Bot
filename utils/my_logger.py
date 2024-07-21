@@ -34,15 +34,16 @@ INFO = logging.INFO
 ERROR = logging.ERROR
 
 
-fileHandler = logging.FileHandler(filename="log.log")
-fileHandler.addFilter(CooldownFilter())
-fileHandler.setLevel(INFO)
+# fileHandler = logging.FileHandler(filename="log.log")
+# fileHandler.addFilter(CooldownFilter())
+# fileHandler.setLevel(INFO)
 
-streamHandler = logging.StreamHandler()
-streamHandler.addFilter(CooldownFilter())
-streamHandler.setLevel(INFO)
+# streamHandler = logging.StreamHandler()
+# streamHandler.addFilter(CooldownFilter())
+# streamHandler.setLevel(INFO)
 
-logging.basicConfig(format=FORMAT, level=INFO, style="{", handlers=[fileHandler, streamHandler])
+# logging.basicConfig(format=FORMAT, level=INFO, style="{", handlers=[fileHandler, streamHandler])
+logging.basicConfig(format=FORMAT, level=INFO, style="{")
 
 logging.getLogger("aiogram").setLevel(INFO)
 logging.getLogger("aiohttp").setLevel(INFO)

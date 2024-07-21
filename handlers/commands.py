@@ -3,9 +3,9 @@ from aiogram.filters import Command, StateFilter, CommandStart
 from aiogram.types import Message, BotCommand
 from aiogram.fsm.context import FSMContext
 
-from utils.interface import get_accounts_by_uid, change_skin, get_account_count_by_uid, get_account_by_username, get_usernames_by_uid, change_password
 from utils.fsm.my_states import MenuStates, RegisterStates
-from utils.my_checkers import check_skin, check_password
+from utils.my_checkers import check_skin, check_password, check_username
+from utils import interface
 import logging
 import pathlib
 
@@ -50,14 +50,44 @@ async def update_commands(_: Message, bot: Bot):
 async def cmd_register(message: Message, state: FSMContext):
     if message.from_user is None:
         return
+    elif message.text is None:
+        return
     
-    account_count = get_account_count_by_uid(message.from_user.id)
-    if account_count >= 3:
+    success, account_count = interface.get_account_count_by_uid(message.from_user.id)
+    if not success: return await message.answer(f"При проверке что-то пошло не так. Подробнее: {account_count}")
+    elif account_count >= 3:  # type: ignore[operator]  # mypy, you are the best
         await message.answer("Вы достигли лимита по количеству аккаунтов на одного человека. Максимум вы можете иметь 3 аккаунта.")
         return
 
-    await message.answer("Напишите ник для вашего аккаунта (от 3 до 12 символов, только английские буквы и цифры)" + cancel_hint)
-    await state.set_state(RegisterStates.input_username)
+    args = message.text.split(" ")
+    if len(args) == 1:
+        await message.answer("Напишите ник для вашего аккаунта (от 3 до 12 символов, только английские буквы и цифры)" + cancel_hint)
+        await state.set_state(RegisterStates.input_username)
+        return
+    elif len(args) != 3: return await message.answer("Вы можете сразу зарегистрировать аккаунт, вписав ник и пароль для вашего аккаунта. Например: /register altuha superkrutaya")
+    
+    _, username, password = args
+
+    success, msg = await check_username(username)
+    if not success: return await message.answer(f"При проверке что-то пошло не так. Подробнее: {msg}")
+
+    success, already_exists = interface.account_is_exists(username)
+    if not success: return await message.answer(f"При проверке что-то пошло не так. Подробнее: {already_exists}")
+    elif already_exists: return await message.answer("Данный ник уже занят. Попробуйте другой ник")
+    
+    success, msg = await check_password(password)
+    if not success: return await message.answer(f"При проверке что-то пошло не так. Подробнее: {msg}")
+
+    success, msg = interface.add_account(uid=message.from_user.id, username=username, password=password)
+    if not success:
+        await message.answer(f"Что-то пошло не так. Пройдите регистрацию ещё раз с помощью команды /register. Подробнее: {msg}")
+        await state.set_state(MenuStates.need_register)
+        return
+    
+    await state.clear()
+
+    await state.set_state(MenuStates.menu)
+    await message.answer(f"Регистрация прошла успешно! По желанию можно поменять свой скин командой /skin")
 
 
 @rt.message(MenuStates.menu, Command("skin"))
@@ -88,28 +118,22 @@ async def cmd_skin(message: Message):
 
     _, username, url = args
 
-    accounts = get_accounts_by_uid(uid)
-    if accounts is None:
-        await message.answer("У вас нет аккаунтов")
-        return
-    
+    success, accounts = interface.get_accounts_by_uid(uid)
+    if not success: return await message.answer(f"Что-то пошло не так при получении аккаунтов: {accounts}")
+    elif accounts is None: return await message.answer("У вас нет аккаунтов")
+    assert isinstance(accounts, list), "wth"
+
     usernames = [a.username for a in accounts]
 
-    if username not in usernames:
-        await message.answer("Аккаунта с таким ником нет среди ваших")
-        return
+    if username not in usernames: return await message.answer("Аккаунта с таким ником нет среди ваших")
 
     urlValid, msg = await check_skin(url)
-    if not urlValid:
-        await message.answer(f"Что-то пошло не так при проверке скина. Подробнее: {msg}")
-        return
+    if not urlValid: return await message.answer(f"Что-то пошло не так при проверке скина. Подробнее: {msg}")
 
     account = accounts[usernames.index(username)]
 
-    status, msg = change_skin(username=username, skinURL=url)
-    if not status:
-        await message.answer(f"Что-то пошло не так при изменении скина. Подробнее: {msg}")
-        return
+    success, msg = interface.change_skin(username=username, skinURL=url)
+    if not success: return await message.answer(f"Что-то пошло не так при изменении скина: {msg}")
 
     await message.answer("Скин успешно изменён")
 
@@ -119,10 +143,9 @@ async def cmd_profiles(message: Message):
     if message.from_user is None:
         return
 
-    accounts = get_accounts_by_uid(message.from_user.id)
-    if accounts is None:
-        await message.answer(f"У вас нет аккаунтов")
-        return
+    success, accounts = interface.get_accounts_by_uid(message.from_user.id)
+    if not success: return await message.answer(f"Что-то пошло не так при получении аккаунтов: {accounts}")
+    if accounts is None: return await message.answer(f"У вас нет аккаунтов")
 
     accounts_string = [str(acc) for acc in accounts]
     result = splitter.join([""] + accounts_string)
@@ -140,31 +163,23 @@ async def cmd_changepass(message: Message):
     uid = message.from_user.id
     args = message.text.split(" ")
 
-    if len(args) != 3:
-        await message.answer("Надо указать ник вашего аккаунта и новый пароль для него")
-        return
+    if len(args) != 3: return await message.answer("Надо указать ник вашего аккаунта и новый пароль для него")
     
     _, username, password = args
     
-    usernames = get_usernames_by_uid(uid) or []
-    if username not in usernames:
-        await message.answer("У вас нет такого аккаунта")
-        return
+    success, usernames = interface.get_usernames_by_uid(uid)
+    if not success: return await message.answer(f"Что-то пошло не так при получении ников: {usernames}")
+    elif username not in (usernames or []): return await message.answer("У вас нет такого аккаунта")
     
-    account = get_account_by_username(username)
-    if account is None:
-        await message.answer(f"Аккаунта с таким ником нет")
-        return
+    success, account = interface.get_account_by_username(username)
+    if not success: return await message.answer(f"Что-то пошло не так при получении ников: {account}")
+    elif account is None: return await message.answer(f"Аккаунта с таким ником нет")
 
     success, msg = await check_password(password)
-    if not success:
-        await message.answer(msg)
-        return
+    if not success: return await message.answer(f"Что-то пошло не так при проверке пароля: {msg}")
     
-    success, msg = change_password(username, password)
-    if not success:
-        await message.answer(f"Что-то не так при смене пароля: {msg}")
-        return
+    success, msg = interface.change_password(username, password)
+    if not success: return await message.answer(f"Что-то пошло не так при смене пароля: {msg}")
     
     await message.answer("Пароль успешно изменён!")
 

@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 
 from utils.my_checkers import check_username, check_password
 from utils.fsm.my_states import MenuStates, RegisterStates
-from utils.interface import add_account, account_is_exists
+from utils import interface
 import logging
 
 
@@ -33,8 +33,9 @@ async def fsm_register_username(message: Message, state: FSMContext):
         await message.answer(msg)
         return
 
-    alredy_exists = account_is_exists(username)
-    if alredy_exists:
+    success, already_exists = interface.account_is_exists(username)
+    if not success: return await message.answer("Что-то пошло не так при проверке ника: {already_exists}")
+    if already_exists:
         await message.answer("Данный ник уже занят. Попробуйте другой ник")
         return
     
@@ -66,9 +67,9 @@ async def fsm_register_password(message: Message, state: FSMContext):
         await state.set_state(MenuStates.need_register)
         return
 
-    status, msg = add_account(uid=message.from_user.id, username=username, password=password)
-    if not status:
-        await message.answer(f"Что-то пошло не так. Пройдите регистрацию ещё раз с помощью команды /register. Подробнее: {msg}")
+    success, msg = interface.add_account(uid=message.from_user.id, username=username, password=password)
+    if not success:
+        await message.answer(f"Что-то пошло не так при регистрации аккаунта: {msg}. Пройдите регистрацию ещё раз с помощью команды /register.")
         await state.set_state(MenuStates.need_register)
         return
     

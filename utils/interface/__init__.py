@@ -1,33 +1,45 @@
-from typing import Optional
+from typing import Optional, Literal
 
-from ..my_classes import Account as _Account
+from ..my_classes import Account
 
 from . import my_banlist as _block
 from . import my_database as _db
 
 
+# Warning! Author use mypy, so there is very much "assert"s D:
 ErrorUsernameNotFound = _db.ErrorUsernameNotFound
 
 
-def get_accounts_by_uid(uid: int) -> list[_Account] | None:
+def get_accounts_by_uid(uid: int) -> tuple[Literal[True], list[Account] | None] | tuple[Literal[False], str]:
     return _db.getAccountsByUid(uid)
 
 
-def get_usernames_by_uid(uid: int) -> list[str] | None:
-    return [n.username for n in (_db.getAccountsByUid(uid) or [])]
+def get_usernames_by_uid(uid: int) -> tuple[Literal[True], list[str] | None] | tuple[Literal[False], str]:
+    success, accounts = (_db.getAccountsByUid(uid) or [])
+    if not success:
+        assert isinstance(accounts, str), "wth"
+        return (False, accounts)
+    assert isinstance(accounts, list), "wth"
+    accounts = accounts or []
+    return (True, [n.username for n in accounts])
 
 
 def change_skin(username: str, skinURL: str) -> tuple[bool, str]:
     success, isBanned = _db.getBanStateByUsername(username)
-    if not success and isinstance(isBanned, str):
-        return (success, isBanned)
+    if not success:
+        assert isinstance(isBanned, str), "wth"
+        return (False, isBanned)
     elif isinstance(isBanned, bool) and not isBanned:
         return _db.changeSkin(username, skinURL)
     
-    account = _db.getAccountByUsername(username)
-    if account is None:
+    success, account = get_account_by_username(username)
+    if not success:
+        assert isinstance(account, str), "wth"
+        return (False, account)
+    elif account is None:
         return ErrorUsernameNotFound
     
+    assert isinstance(account, Account), "wth"
     reason = "Заблокированная возможность менять скины. Причина: " + (account.skinBannedReason or "*не указанно*")
     return (False, reason)
 
@@ -36,7 +48,7 @@ def add_account(uid: int, username: str, password: str, skinURL: Optional[str] =
     return _db.addUser(uid, username, password, skinURL)
 
 
-def account_is_exists(username: str) -> bool:
+def account_is_exists(username: str) -> tuple[Literal[True], bool] | tuple[Literal[False], str]:
     return _db.accountIsExists(username)
 
 
@@ -44,15 +56,15 @@ def change_password(username: str, new_password: str) -> tuple[bool, str]:
     return _db.changePassword(username, new_password)
 
 
-def get_account_count_by_uid(uid: int) -> int:
+def get_account_count_by_uid(uid: int) -> tuple[Literal[True], int] | tuple[Literal[False], str]:
     return _db.getAccountCountByUid(uid)
 
 
-def get_all_accounts() -> list[_Account] | None:
+def get_all_accounts() -> tuple[Literal[True], list[Account] | None] | tuple[Literal[False], str]:
     return _db.getAllAccounts()
 
 
-def get_account_by_username(username: str) -> _Account | None:
+def get_account_by_username(username: str) -> tuple[Literal[True], Account | None] | tuple[Literal[False], str]:
     return _db.getAccountByUsername(username)
 
 
@@ -76,19 +88,27 @@ def unban_skin_by_username(username: str) -> tuple[bool, str]:
 
 
 def ban_by_username(username: str, reason: Optional[str] = None) -> tuple[bool, str]:
-    account = get_account_by_username(username)
-    if account is None:
+    success, account = get_account_by_username(username)
+    if not success:
+        assert isinstance(account, str), "wth"
+        return (False, account)
+    elif account is None:
         return ErrorUsernameNotFound
     
+    assert isinstance(account, Account), "wth"
     _block.banUser(account.telegramID, reason or "*Не указано*")
     return (True, "Человек забанен")
 
 
 def unban_by_username(username: str) -> tuple[bool, str]:
-    account = get_account_by_username(username)
-    if account is None:
+    success, account = get_account_by_username(username)
+    if not success:
+        assert isinstance(account, str), "wth"
+        return (False, account)
+    elif account is None:
         return ErrorUsernameNotFound
     
+    assert isinstance(account, Account), "wth"
     _block.unbanUser(account.telegramID)
     return (True, "Человек разбанен")
 
