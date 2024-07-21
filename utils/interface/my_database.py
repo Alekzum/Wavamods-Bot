@@ -34,8 +34,10 @@ def connect_to_remote_database():
 
 
 def text_to_sha512(text: str) -> str:
-    salted_text = DB_SALT + text + DB_SALT
-    return hashlib.sha256(salted_text.encode("utf-8")).hexdigest()
+    """Clueless"""
+    # salted_text = DB_SALT + text + DB_SALT
+    # return hashlib.sha256(salted_text.encode("utf-8")).hexdigest()
+    return text
 
 
 def handle_pymysql_errors(func):
@@ -44,7 +46,7 @@ def handle_pymysql_errors(func):
             return func(*args, **kwargs)
         except pymysql.err.Error as ex:
             logger.error(repr(ex))
-            return (False, f"Произошла ошибка {ex!r} при работе с БД")
+            return (False, f"Произошла ошибка при работе с базой данных")
     return inner
 
 
