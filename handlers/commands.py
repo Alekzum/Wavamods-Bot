@@ -147,11 +147,14 @@ async def cmd_profiles(message: Message):
     if not success: return await message.answer(f"Что-то пошло не так при получении аккаунтов: {accounts}")
     if accounts is None: return await message.answer(f"У вас нет аккаунтов")
 
-    accounts_string = [str(acc) for acc in accounts]
-    result = splitter.join([""] + accounts_string)
-    await message.answer(f"Все ваши аккаунты: {result}\n\n\nВнимание! Ваши пароли зашифрованы. Если вы забыли пароль, "
-                         "то можете поменять его командой /changepass аккаунт новый_пароль")
-
+    accounts = [str(acc) for acc in accounts]
+    if not accounts:
+        await message.asnwer("У вас нет аккаунтов.")
+        return
+    
+    accounts_string = splitter.join([""] + accounts)
+    await message.answer(f"Все ваши аккаунты: {accounts_string}\n\n\nВнимание! Ваши пароли зашифрованы. Если вы забыли пароль, "
+                          "то можете поменять его командой /changepass аккаунт новый_пароль")
 
 @rt.message(MenuStates.menu, Command("changepass"))
 async def cmd_changepass(message: Message):
