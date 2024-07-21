@@ -112,13 +112,13 @@ def getAccountsByUid(telegramID: int) -> tuple[Literal[True], list[Account] | No
 
 
 @handle_pymysql_errors
-def getAllAccounts() -> tuple[Literal[True], list[Account] | None] | tuple[Literal[False], str]:
+def getAllAccounts() -> tuple[Literal[True], list[Account] | list] | tuple[Literal[False], str]:
     """return list like [Account1, Account2, Account3]"""
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
             cur.execute(f"SELECT `username`, `password`, `skinURL`, `skinBanned`, `skinBannedReason`, `telegramID` FROM `{TABLE_NAME}`", ())
             result: list[ACCOUNT_TUPLE] | None = cur.fetchall()
-    return (True, [Account(**t) for t in result] if result else None)
+    return (True, [Account(**t) for t in result] if result else [])
 
 
 @handle_pymysql_errors

@@ -60,7 +60,7 @@ def get_account_count_by_uid(uid: int) -> tuple[Literal[True], int] | tuple[Lite
     return _db.getAccountCountByUid(uid)
 
 
-def get_all_accounts() -> tuple[Literal[True], list[Account] | None] | tuple[Literal[False], str]:
+def get_all_accounts() -> tuple[Literal[True], list[Account] | list] | tuple[Literal[False], str]:
     return _db.getAllAccounts()
 
 

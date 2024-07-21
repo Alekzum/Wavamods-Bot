@@ -18,8 +18,7 @@ rt = Router()
 async def cmd_admin(message: Message):
     success, accounts = interface.get_all_accounts()
     if not success: return await message.answer(f"Что-то пошло не так при получении всех аккаунтов: {accounts!r}")
-    assert isinstance(accounts, list) or accounts is None, "wth"
-    accounts = accounts or []
+    assert isinstance(accounts, list), "wth"
     ban_hint = "Можно удалить аккаунт с помощью `/delete_account ник`\n\
 Можно убрать возможность менять скин у человека при помощи `/ban_skin ник [причина]`, или снять с помощью `/unban_skin ник`\n\
 Аккаунты в базе данных:"
