@@ -6,21 +6,20 @@ from . import my_banlist as _block
 from . import my_database as _db
 
 
-# Warning! Author use mypy, so there is very much "assert"s D:
+# Warning! Author use mypy, so there is so mush "assert"s D:
 ErrorUsernameNotFound = _db.ErrorUsernameNotFound
 
 
-def get_accounts_by_uid(uid: int) -> tuple[Literal[True], list[Account] | None] | tuple[Literal[False], str]:
+def get_accounts_by_uid(uid: int) -> tuple[Literal[True], list[Account] | list] | tuple[Literal[False], str]:
     return _db.getAccountsByUid(uid)
 
 
-def get_usernames_by_uid(uid: int) -> tuple[Literal[True], list[str] | None] | tuple[Literal[False], str]:
+def get_usernames_by_uid(uid: int) -> tuple[Literal[True], list[str] | list] | tuple[Literal[False], str]:
     success, accounts = (_db.getAccountsByUid(uid) or [])
     if not success:
         assert isinstance(accounts, str), "wth"
         return (False, accounts)
     assert isinstance(accounts, list), "wth"
-    accounts = accounts or []
     return (True, [n.username for n in accounts])
 
 
@@ -40,7 +39,7 @@ def change_skin(username: str, skinURL: str) -> tuple[bool, str]:
         return ErrorUsernameNotFound
     
     assert isinstance(account, Account), "wth"
-    reason = "Заблокированная возможность менять скины. Причина: " + (account.skinBannedReason or "*не указанно*")
+    reason = "Заблокированная возможность менять скины. Причина: " + (account.skinBannedReason or "*Не указано*")
     return (False, reason)
 
 

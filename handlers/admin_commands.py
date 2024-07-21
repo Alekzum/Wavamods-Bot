@@ -56,7 +56,7 @@ async def cmd_ban_skin(message: Message, bot: Bot):
     
     _, username, *reason_list = args
 
-    reason = " ".join(reason_list) or "*не указано*"
+    reason = " ".join(reason_list) or "*Не указано*"
     
     success, msg = interface.ban_skin_by_username(username, reason)
     if not success: return await message.answer(f"Что-то пошло не так при выдаче бана: {msg!r}")
@@ -112,7 +112,7 @@ async def cmd_ban(message: Message, bot: Bot):
     
     _, username, *reason_list = args
 
-    reason = " ".join(reason_list) or "*не указано*"
+    reason = " ".join(reason_list) or "*Не указано*"
     
     success, msg = interface.ban_by_username(username, reason)
     if not success: return await message.answer(f"Что-то пошло не так при выдаче бана: {msg!r}")
@@ -165,7 +165,7 @@ async def cmd_delete_account(message: Message, bot: Bot):
     
     _, username, *reason_list = args
 
-    reason = " ".join(reason_list) or "*не указано*"
+    reason = " ".join(reason_list) or "*Не указано*"
 
     success, account = interface.get_account_by_username(username)
     if not success: return await message.answer(f"Что-то пошло не так при проверке аккаунта: {account!r}")

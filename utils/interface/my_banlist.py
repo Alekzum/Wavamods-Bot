@@ -79,7 +79,7 @@ def getBannedUsers() -> list[int] | list:
 
 def getBannedReason(uid: int) -> str:
     raw = load_raw()
-    result = raw.get(uid).get("bannedReason", "*не указано*")
+    result = raw.get(uid).get("bannedReason", "*Не указано*")
     return result
 
 
