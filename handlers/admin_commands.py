@@ -18,8 +18,6 @@ rt = Router()
 async def cmd_admin_list(message: Message):
     all_commands = """Все доступные команды:
     • /admin
-    • /ban_skin Ник [Причина] - заблокировать возможность менять скин на аккаунте
-    • /unban_skin Ник - разблокировать возможность менять скин на аккаунте
     • /ban Ник [Причина] - забанить аккаунт
     • /unban Ник - разбанить аккаунт 
     • /delete_account Ник [Причина] - удалить аккаунт
@@ -30,63 +28,6 @@ async def cmd_admin_list(message: Message):
     accounts_string = SPLITTER.join([repr(account) for account in accounts])
     text = "\n\n".join([all_commands, f"Все зарегистрированные аккаунты: {SPLITTER}{accounts_string}"])
     await message.answer(text)
-
-
-
-@rt.message(MenuStates.menu, AdminFilter(), Command("ban_skin"))
-async def cmd_ban_skin(message: Message, bot: Bot):
-    if message.from_user is None:
-        return
-    if message.text is None:
-        return
-
-    args = message.text.split(" ")
-
-    if len(args) < 2: return await message.answer("Надо указать ник аккаунта и, опционально, причину")
-    
-    _, username, *reason_list = args
-
-    reason = " ".join(reason_list) or "*Не указано*"
-    
-    success, msg = interface.ban_skin_by_username(username, reason)
-    if not success: return await message.answer(f"Что-то пошло не так при выдаче бана: {msg!r}")
-    await message.answer(f"Бан выдан")
-
-    success, account = interface.get_account_by_username(username)
-    if not success:
-        await message.answer(f"Что-то пошло не так при получении аккаунта: {account!r}")
-        pass
-
-    assert isinstance(account, interface.Account), "wth"
-    try: await bot.send_message(account.telegramID, f"Вашему аккаунту {username} заблокировали возможность менять скин по причине {reason}")
-    except Exception: pass
-
-
-@rt.message(MenuStates.menu, AdminFilter(), Command("unban_skin"))
-async def cmd_unban_skin(message: Message, bot: Bot):
-    if message.from_user is None:
-        return
-    if message.text is None:
-        return
-
-    args = message.text.split(" ")
-
-    if len(args) != 2: return await message.answer("Надо указать ник аккаунта")
-    
-    _, username = args
-    
-    success, msg = interface.unban_skin_by_username(username)
-    if not success: return await message.answer(f"Что-то пошло не так при снятии бана: {msg!r}")
-
-    success, account = interface.get_account_by_username(username)
-    if not success: return await message.answer(f"Что-то пошло не так при получении аккаунта: {account!r}") 
-
-    await message.answer(f"Бан снят")
-    assert isinstance(account, interface.Account), "wth"
-
-    assert account is not None
-    try: await bot.send_message(account.telegramID, f"Ваш аккаунт {username} теперь может менять скин")
-    except Exception: pass
 
 
 @rt.message(MenuStates.menu, AdminFilter(), Command("ban"))

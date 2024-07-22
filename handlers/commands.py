@@ -4,7 +4,7 @@ from aiogram.types import Message, BotCommand
 from aiogram.fsm.context import FSMContext
 
 from utils.fsm.my_states import MenuStates, RegisterStates
-from utils.my_checkers import check_skin, check_password, check_username
+from utils.my_checkers import check_password, check_username
 from utils import interface
 import logging
 import pathlib
@@ -35,7 +35,6 @@ async def update_commands(_: Message, bot: Bot):
             [
                 BotCommand(command="cancel", description="Отменить текущее действие"),
                 BotCommand(command="register", description="Привязать ваш аккаунт телеграм к аккаунту майнкрафт"),
-                BotCommand(command="skin", description="Установить скин"),
                 BotCommand(command="changepass", description="Изменить пароль от аккаунта"),
                 BotCommand(command="profiles", description="Перечислить все ваши аккаунты"),
                 BotCommand(command="admin", description="Если вы админ - показать все админ-команды"),
@@ -87,55 +86,7 @@ async def cmd_register(message: Message, state: FSMContext):
     await state.clear()
 
     await state.set_state(MenuStates.menu)
-    await message.answer(f"Регистрация прошла успешно! По желанию можно поменять свой скин командой /skin")
-
-
-@rt.message(MenuStates.menu, Command("skin"))
-async def cmd_skin(message: Message):
-    if message.from_user is None or message.text is None:
-        return
-    
-    uid = message.from_user.id
-
-    args = message.text.split(" ")
-
-    if len(args) in [1, 2]:
-        await message.answer(
-            "Вместе с командой введите ник вашего аккаунта и ссылку на ваш скин. "
-            "Ссылка должна содержать изображение с одним из таких расширений: .png, .jpg, .jpeg"
-            "Пример: /skin someone https://best.site.ever/some/path/skin.png"
-        )
-        return
-    
-    elif len(args) > 3:
-        await message.answer(
-            "Слишком много аргументов. "
-            "Вместе с командой введите ник вашего аккаунта и ссылку на ваш скин. "
-            "Ссылка должна содержать изображение с одним из таких расширений: .png, .jpg, .jpeg. "
-            "Пример использования: /skin someone https://best.site.ever/some/path/skin.png"
-        )
-        return
-
-    _, username, url = args
-
-    success, accounts = interface.get_accounts_by_uid(uid)
-    if not success: return await message.answer(f"Что-то пошло не так при получении аккаунтов: {accounts}")
-    elif accounts is None: return await message.answer("У вас нет аккаунтов")
-    assert isinstance(accounts, list), "wth"
-
-    usernames = [a.username for a in accounts]
-
-    if username not in usernames: return await message.answer("Аккаунта с таким ником нет среди ваших")
-
-    urlValid, msg = await check_skin(url)
-    if not urlValid: return await message.answer(f"Что-то пошло не так при проверке скина. Подробнее: {msg}")
-
-    account = accounts[usernames.index(username)]
-
-    success, msg = interface.change_skin(username=username, skinURL=url)
-    if not success: return await message.answer(f"Что-то пошло не так при изменении скина: {msg}")
-
-    await message.answer("Скин успешно изменён")
+    await message.answer(f"Регистрация прошла успешно!")
 
 
 @rt.message(MenuStates.menu, Command("profiles"))
@@ -147,12 +98,12 @@ async def cmd_profiles(message: Message):
     if not success: return await message.answer(f"Что-то пошло не так при получении аккаунтов: {accounts}")
     if accounts is None: return await message.answer(f"У вас нет аккаунтов")
 
-    accounts: list[str] = [str(acc) for acc in accounts]
+    _accounts: list[str] = [""] + [str(acc) for acc in accounts]
     if not accounts:
         await message.answer("У вас нет аккаунтов.")
         return
     
-    accounts_string = splitter.join([""] + accounts)
+    accounts_string = splitter.join(_accounts)
     await message.answer(f"Все ваши аккаунты: {accounts_string}\n\n\nВнимание! Ваши пароли зашифрованы. Если вы забыли пароль, "
                           "то можете поменять его командой /changepass аккаунт новый_пароль")
 
