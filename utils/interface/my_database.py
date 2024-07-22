@@ -35,9 +35,9 @@ def connect_to_remote_database():
 
 def text_to_sha512(text: str) -> str:
     """Clueless"""
-    # salted_text = DB_SALT + text + DB_SALT
-    # return hashlib.sha256(salted_text.encode("utf-8")).hexdigest()
-    return text
+    salted_text = DB_SALT + text + DB_SALT
+    result = hashlib.sha256(salted_text.encode("utf-8")).hexdigest()
+    return result
 
 
 def handle_pymysql_errors(func):
