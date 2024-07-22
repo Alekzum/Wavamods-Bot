@@ -147,9 +147,9 @@ async def cmd_profiles(message: Message):
     if not success: return await message.answer(f"Что-то пошло не так при получении аккаунтов: {accounts}")
     if accounts is None: return await message.answer(f"У вас нет аккаунтов")
 
-    accounts = [str(acc) for acc in accounts]
+    accounts: list[str] = [str(acc) for acc in accounts]
     if not accounts:
-        await message.asnwer("У вас нет аккаунтов.")
+        await message.answer("У вас нет аккаунтов.")
         return
     
     accounts_string = splitter.join([""] + accounts)
