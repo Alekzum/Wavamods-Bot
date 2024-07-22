@@ -44,7 +44,7 @@ streamHandler = logging.StreamHandler()
 streamHandler.addFilter(CooldownFilter())
 streamHandler.setLevel(INFO)
 
-handlers = [fileHandler, streamHandler] if LOG_TO_CONSOLE else [fileHandler]
+handlers: list[logging.Handler] = [fileHandler, streamHandler] if LOG_TO_CONSOLE else [fileHandler]
 
 logging.basicConfig(format=FORMAT, level=INFO, style="{", handlers=handlers)
 
