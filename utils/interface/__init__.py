@@ -23,26 +23,6 @@ def get_usernames_by_uid(uid: int) -> tuple[Literal[True], list[str] | list] | t
     return (True, [n.username for n in accounts])
 
 
-def change_skin(username: str, skinURL: str) -> tuple[bool, str]:
-    success, isBanned = _db.getBanStateByUsername(username)
-    if not success:
-        assert isinstance(isBanned, str), "wth"
-        return (False, isBanned)
-    elif isinstance(isBanned, bool) and not isBanned:
-        return _db.changeSkin(username, skinURL)
-    
-    success, account = get_account_by_username(username)
-    if not success:
-        assert isinstance(account, str), "wth"
-        return (False, account)
-    elif account is None:
-        return ErrorUsernameNotFound
-    
-    assert isinstance(account, Account), "wth"
-    reason = "Заблокированная возможность менять скины. Причина: " + (account.skinBannedReason or "*Не указано*")
-    return (False, reason)
-
-
 def add_account(uid: int, username: str, password: str, skinURL: Optional[str] = None) -> tuple[bool, str]:
     return _db.addUser(uid, username, password, skinURL)
 
@@ -76,14 +56,6 @@ def real_delete_account_by_username(username: str) -> tuple[bool, str]:
 
 def delete_account_by_username(username: str) -> tuple[bool, str]:
     return _db.deleteAccountByUsername(username)
-
-
-def ban_skin_by_username(username: str, reason: Optional[str] = None) -> tuple[bool, str]:
-    return _db.banSkinByUsername(username, reason)
-
-
-def unban_skin_by_username(username: str) -> tuple[bool, str]:
-    return _db.unbanSkinByUsername(username)
 
 
 def ban_by_username(username: str, reason: Optional[str] = None) -> tuple[bool, str]:
