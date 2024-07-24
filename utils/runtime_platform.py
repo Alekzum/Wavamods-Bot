@@ -74,8 +74,18 @@ def install_package(package: str) -> bool:
 def check_packages():
     ignore_list = ["python"]
     with open("requirements.txt") as file: raw = file.read()
-    packages_excepted = sorted([re.match(r"\w+", a).group() for a in raw.splitlines()])
-    packages_actual = sorted([re.fullmatch(r"\w+", a).group() for a in os.listdir(os.sep.join([_venv_name, "Lib", "site-packages"])) if re.fullmatch(r"\w+", a) is not None])
+    packages_excepted: list[str] = []
+    for a in raw.splitlines():
+        b = re.match(r"(\w+)==(.+)", a.lower())
+        if b is not None:
+            packages_excepted.append(f"{b.group(1)}=={b.group(2)}")
+    
+    packages_actual: list[str] = []
+    for a in os.listdir(os.sep.join([_venv_name, "Lib", "site-packages"])):
+        b = re.fullmatch(r"(\w+)-([\d.]+)\.dist-info", a.lower())
+        if b is not None:
+            packages_actual.append(f"{b.group(1)}=={b.group(2)}")
+
     if not all([a in packages_actual for a in packages_excepted]):
         difference = [a for a in packages_excepted if a not in packages_actual and a not in ignore_list]
         result = [install_package(package) for package in difference]
