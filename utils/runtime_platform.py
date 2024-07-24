@@ -88,7 +88,6 @@ def check_packages():
     if not all([a in packages_actual for a in packages_excepted]):
         difference = [a for a in packages_excepted if a not in packages_actual and a not in ignore_list]
         for package in difference:
-            # print(f"Installing {package}...")
             install_package(package)
 
 
