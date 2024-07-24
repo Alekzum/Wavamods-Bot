@@ -38,12 +38,11 @@ def check_platform():
         logger.info(f"Creating {_venv_name}...")
         venv.create(_venv_name, with_pip=True)
         install_packages()
-        check_packages()
         start_venv()
     
     elif not in_venv():
-        check_packages()
         start_venv()
+    check_packages()
 
 
 def install_packages():
@@ -88,7 +87,9 @@ def check_packages():
 
     if not all([a in packages_actual for a in packages_excepted]):
         difference = [a for a in packages_excepted if a not in packages_actual and a not in ignore_list]
-        result = [install_package(package) for package in difference]
+        for package in difference:
+            # print(f"Installing {package}...")
+            install_package(package)
 
 
 def start_venv():
