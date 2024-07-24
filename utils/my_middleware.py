@@ -1,28 +1,7 @@
-from typing import Callable, Dict, Any, Awaitable, Union
+from typing import Callable, Dict, Any, Awaitable
 from aiogram import BaseMiddleware
-from aiogram.types import Message, CallbackQuery
-from .interface import is_banned, get_banned_reason
+from aiogram.types import Message
 import time
-
-
-class BannedMiddleware(BaseMiddleware):
-    """Dont let user use bot if he is banned"""
-    async def __call__(
-        self,
-        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
-        event: Message,  # type: ignore[override]
-        data: Dict[str, Any]
-    ) -> Any:
-        if event.from_user and not is_banned(event.from_user.id):
-            return await handler(event, data)
-
-        elif event.from_user and is_banned(event.from_user.id):
-            reason = get_banned_reason(event.from_user.id)
-            if isinstance(event, Message):
-                await event.answer(f"Вы получили бан в этом боте. Причина: {reason}")
-                
-            elif isinstance(event, CallbackQuery):
-                await event.answer(f"Вы получили бан в этом боте. Причина: {reason}", show_alert=True, cache_time=60)
 
 
 class CooldownMiddleware(BaseMiddleware):
