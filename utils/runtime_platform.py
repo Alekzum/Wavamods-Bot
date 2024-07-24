@@ -1,4 +1,4 @@
-import subprocess, logging, venv, sys, os
+import subprocess, logging, venv, sys, re, os
 from contextlib import suppress
 
 
@@ -38,9 +38,11 @@ def check_platform():
         logger.info(f"Creating {_venv_name}...")
         venv.create(_venv_name, with_pip=True)
         install_packages()
+        check_packages()
         start_venv()
     
     elif not in_venv():
+        check_packages()
         start_venv()
 
 
@@ -67,6 +69,16 @@ def install_package(package: str) -> bool:
         return False
     logger.info("Package installed")
     return True
+
+
+def check_packages():
+    ignore_list = ["python"]
+    with open("requirements.txt") as file: raw = file.read()
+    packages_excepted = sorted([re.match(r"\w+", a).group() for a in raw.splitlines()])
+    packages_actual = sorted([re.fullmatch(r"\w+", a).group() for a in os.listdir(os.sep.join([_venv_name, "Lib", "site-packages"])) if re.fullmatch(r"\w+", a) is not None])
+    if not all([a in packages_actual for a in packages_excepted]):
+        difference = [a for a in packages_excepted if a not in packages_actual and a not in ignore_list]
+        result = [install_package(package) for package in difference]
 
 
 def start_venv():
