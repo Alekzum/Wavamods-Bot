@@ -34,9 +34,8 @@ if path == "":
 
 
 BOT_TOKEN: str = get_token()
-DB_HOST = get_field("DB_HOST", "Need host with database (127.0.0.0 for example): ")
-DB_USER = get_field("DB_USER", "Need login for database connection: ")
-DB_PASS = get_field("DB_PASS", "Need password for database connection: ")
-DB_NAME = get_field("DB_NAME", "Need table's name: ")
-DB_SALT: str = get_field("DB_SALT", "Optional feature: salt to hashing passwords: ")
-ADMIN_IDS: list[int] = [int(a) for a in get_field("ADMIN_IDS").replace(" ", "").split(",")]
+RCON_HOST = get_field("RCON_HOST", "Need RCON host: ")
+RCON_PORT: int = int(get_field("RCON_PORT", "Need RCON port: "))
+RCON_PASSWORD = get_field("RCON_PASSWORD", "Need password for RCON: ")
+STUPIDWALLET_TOKEN = get_field("STUPIDWALLET_TOKEN", "Need API-KEY from https://stupidwallet_bot.t.me: ")
+SUPPORT_NAME = get_field("SUPPORT_NAME", "Your username (for command /privacy): ")

@@ -1,20 +1,20 @@
 from collections import defaultdict
 from typing import Any
 import logging
+import sys
 
 
 LOG_TO_CONSOLE = False
 
 LOGGING_COOLDOWN = 3
 FORMAT = '{asctime} - [{levelname}] {filename}:{funcName}:{lineno} {name} - {message}'
-INFO = logging.INFO
-ERROR = logging.ERROR
+LEVEL = logging.INFO
 
 
 class CooldownFilter(logging.Filter):
     """Do not print same line if time after previous line less or equal <COOLDOWN> seconds. Defaults to 5 seconds"""
     def __init__(self, name='', cooldown=5):
-        """
+        """Do not print same line if time after previous line less or equal <COOLDOWN> seconds. Defaults to 5 seconds
         Initialize a filter.
 
         Initialize with the name of the logger which, together with its
@@ -38,15 +38,14 @@ class CooldownFilter(logging.Filter):
 
 fileHandler = logging.FileHandler(filename="log.log")
 fileHandler.addFilter(CooldownFilter())
-fileHandler.setLevel(INFO)
+fileHandler.setLevel(logging.INFO)
 
 streamHandler = logging.StreamHandler()
 streamHandler.addFilter(CooldownFilter())
-streamHandler.setLevel(INFO)
+streamHandler.setLevel(logging.INFO)
 
-handlers: list[logging.Handler] = [fileHandler, streamHandler] if LOG_TO_CONSOLE else [fileHandler]
+handlers: list[logging.Handler] = [streamHandler, fileHandler] if LOG_TO_CONSOLE else [fileHandler]
 
-logging.basicConfig(format=FORMAT, level=INFO, style="{", handlers=handlers)
+logging.basicConfig(format=FORMAT, level=logging.WARNING, style="{", handlers=handlers)
 
-logging.getLogger("aiogram").setLevel(INFO)
-logging.getLogger("aiohttp").setLevel(INFO)
+logging.getLogger("aiogram.event").setLevel(logging.INFO)

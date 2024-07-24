@@ -1,5 +1,8 @@
+from .config import STUPIDWALLET_TOKEN
+from stupidwallet import Wallet  # type: ignore[import-untyped]
+
 from aiogram import Dispatcher, Bot
-from aiogram.types import User
+from aiogram.types import User, Message
 import asyncio
 import os
 
@@ -12,7 +15,7 @@ def include_routers(dp: Dispatcher, root="handlers"):
 async def pooling(dp: Dispatcher, bot: Bot, polling_timeout: int = 30) -> None:
     """My implementation of Dispatcher._pooling"""
     user: User = await bot.me()
-    print(f"Запущен бот @{user.username} id={bot.id} - {user.full_name}")
+    print(f"Run polling @{user.username} id={bot.id} - {user.full_name}")
     try:
         async for update in dp._listen_updates(bot, polling_timeout=polling_timeout):
             handle_update = dp._process_update(bot=bot, update=update)
@@ -21,4 +24,4 @@ async def pooling(dp: Dispatcher, bot: Bot, polling_timeout: int = 30) -> None:
             dp._handle_update_tasks.add(handle_update_task)
             handle_update_task.add_done_callback(dp._handle_update_tasks.discard)
     finally:
-        print(f"Остановлен бот @{user.username} id={bot.id} - {user.full_name}")
+        print(f"Polling stopped @{user.username} id={bot.id} - {user.full_name}")

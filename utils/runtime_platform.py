@@ -4,7 +4,7 @@ from contextlib import suppress
 
 logger = logging.getLogger(__name__)
 
-_venv_name = "venv"
+_venv_name = ".venv"
 
 # i know only about two paths xd
 if sys.platform == "linux":
@@ -24,8 +24,8 @@ def in_venv():
     return (sys.prefix != sys.base_prefix) or (len(sys.argv)>1 and sys.argv[2] == "--in-venv")
 
 
-def run_popen(command) -> int:
-    p = subprocess.Popen(command)
+def run_popen(command, **kwargs) -> int:
+    p = subprocess.Popen(command, **kwargs)
     with suppress(KeyboardInterrupt):
         returncode = p.wait()
         return returncode
@@ -36,7 +36,7 @@ def check_platform():
     # if venv not exists then create it
     if not os.path.isfile(PATH_TO_PYTHON):
         logger.info(f"Creating {_venv_name}...")
-        venv.create(_venv_name, with_pip=True)
+        venv.create(_venv_name, with_pip=True, upgrade_deps=True)
         install_packages()
         start_venv()
     
@@ -88,7 +88,6 @@ def check_packages():
     if not all([a in packages_actual for a in packages_excepted]):
         difference = [a for a in packages_excepted if a not in packages_actual and a not in ignore_list]
         for package in difference:
-            # print(f"Installing {package}...")
             install_package(package)
 
 
