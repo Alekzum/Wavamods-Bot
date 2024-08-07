@@ -30,13 +30,6 @@ def connect_to_remote_database():
     return connection
 
 
-def text_to_sha512(text: str) -> str:
-    """Clueless"""
-    salted_text = DB_SALT + text + DB_SALT
-    result = hashlib.sha256(salted_text.encode("utf-8")).hexdigest()
-    return result
-
-
 def handle_pymysql_errors(func):
     def inner(*args, **kwargs) -> Any | tuple[Literal[False], str]:
         try:
@@ -76,8 +69,6 @@ def addUser(telegramID: int, username: str, password: str) -> tuple[bool, str]:
     
     elif already_exists:
         return (False, "Данный ник занят")
-
-    password = text_to_sha512(password)
 
     with connect_to_remote_database() as con:
         with con.cursor() as cur:
@@ -127,8 +118,6 @@ def changePassword(username: str, password: str) -> tuple[bool, str]:
     
     elif account is None:
         return ErrorUsernameNotFound
-    
-    password = text_to_sha512(password)
 
     with connect_to_remote_database() as con:
         with con.cursor() as cur:

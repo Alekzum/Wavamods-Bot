@@ -38,5 +38,4 @@ DB_HOST = get_field("DB_HOST", "Need host with database (127.0.0.0 for example):
 DB_USER = get_field("DB_USER", "Need login for database connection: ")
 DB_PASS = get_field("DB_PASS", "Need password for database connection: ")
 DB_NAME = get_field("DB_NAME", "Need table's name: ")
-DB_SALT: str = get_field("DB_SALT", "Optional feature: salt to hashing passwords: ")
 ADMIN_IDS: list[int] = [int(a) for a in get_field("ADMIN_IDS").replace(" ", "").split(",")]
