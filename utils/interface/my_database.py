@@ -1,5 +1,5 @@
 # from html.parser import escape, unescape
-from ..config import DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_SALT
+from ..config import DB_HOST, DB_NAME, DB_USER, DB_PASS
 from ..my_classes import Account
 from typing import Optional, TypedDict, Literal, Any
 import pymysql.cursors  # type: ignore
